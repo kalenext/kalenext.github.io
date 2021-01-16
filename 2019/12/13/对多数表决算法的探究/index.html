@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"kalew515.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在做大创的时候接触到多数表决算法，想象中应该是很可靠的算法，但是在测试的时候发现并不可靠，于是做一个试验来探究一下多数表决算法的可靠性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对多数表决算法的探究">
+<meta property="og:url" content="http://kalew515.com/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/index.html">
+<meta property="og:site_name" content="Kale&#39;s Notes">
+<meta property="og:description" content="在做大创的时候接触到多数表决算法，想象中应该是很可靠的算法，但是在测试的时候发现并不可靠，于是做一个试验来探究一下多数表决算法的可靠性。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-12-13T09:32:17.000Z">
+<meta property="article:modified_time" content="2021-01-11T13:21:45.333Z">
+<meta property="article:author" content="Kale">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://kalew515.com/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>对多数表决算法的探究 | Kale's Notes</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Kale's Notes</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">just a blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://kalew515.com/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/kale.jpg">
+      <meta itemprop="name" content="Kale">
+      <meta itemprop="description" content="随笔">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Kale's Notes">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          对多数表决算法的探究
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-12-13 17:32:17" itemprop="dateCreated datePublished" datetime="2019-12-13T17:32:17+08:00">2019-12-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-11 21:21:45" itemprop="dateModified" datetime="2021-01-11T21:21:45+08:00">2021-01-11</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在做大创的时候接触到多数表决算法，想象中应该是很可靠的算法，但是在测试的时候发现并不可靠，于是做一个试验来探究一下多数表决算法的可靠性。</p>
+<a id="more"></a>
+<ul>
+<li><p>先生成一个只含有0和1的列表，长度为10，重复50次得到一个新的列表，遍历新列表并不断生成随机数，根据随机数的值来改变对应的值。首先将阈值设为0.2，重复测试1000次，结果为<br><code>count_True:1000 count_False:0</code><br>可以看到测试1000次的情况下都是前后不变，可以认为在数据受影响程度为20%以下时多数表决算法是可靠的。</p>
+</li>
+<li><p>将阈值改为0.3，测试1000次，结果为<br><code>count_True:979 count_False:21</code>，正确率为98%，可以认为这种情况下算法可靠。</p>
+</li>
+<li><p>继续测试，将阈值改为0.4，测试1000次，结果为<br><code>count_True:454 count_False:546</code><br>可以看到结果不可靠。</p>
+</li>
+</ul>
+<ul>
+<li><p>接着更改初始列表的长度，将长度改为20，阈值改为0.2，继续测试1000次，结果为<br><code>count_True:1000 count_False:0</code></p>
+<p>结果可靠。</p>
+</li>
+<li><p>将阈值改为0.3，结果为<br><code>count_True:970 count_False:30</code><br>仍然可靠。</p>
+</li>
+<li><p>将阈值改为0.4，结果为<br><code>count_True:201 count_False:799</code></p>
+</li>
+</ul>
+<p>虽然结果同样是不可靠，但是与列表长度为10时的实验结果出现了不同，这次错误概率达到了80%，而列表长度为10时错误概率只有55%。</p>
+<ul>
+<li>接续探究，首先设置阈值为0.500,这里为了精确表示用到了decimal格式，没有采用float格式。<br>列表长度为10，从0.500开始，每个值测试1000次，当不满足正确率高于80%时，就将阈值减去0.001，再测试1000次，测试结果为<br>  <code>The Best Threshold:0.361</code></li>
+</ul>
+<p>可以看到列表长度为10的时候。能接受的最高的阈值为36.1%。</p>
+<ul>
+<li>接下来测试列表长度为20的时候，能接受的最高阈值是多少。<br>结果是<br>  <code>The Best Threshold:0.343</code><br>可以看到能接受的最高阈值为34.3%，低于列表长度为10的时候。即列表长度增长，增大了出错了概率。</li>
+</ul>
+<p>下面是测试代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">import</span> decimal</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">CreList</span>():</span></span><br><span class="line">    ListA = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>]</span><br><span class="line">    <span class="comment"># ListA = [0,0,1,1,0,0,1,1,0,1]</span></span><br><span class="line">    ListB = []</span><br><span class="line">    length = <span class="built_in">len</span>(ListA)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">50</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">            ListB.append(ListA[j])</span><br><span class="line">    <span class="keyword">return</span> ListA,ListB,length</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">RandomChange</span>(<span class="params">ListB,Threshold</span>):</span></span><br><span class="line">    old_length = <span class="built_in">len</span>(ListB)</span><br><span class="line">    ListC = ListB</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(old_length):</span><br><span class="line">        <span class="keyword">if</span> random.random() &lt; Threshold:</span><br><span class="line">            <span class="keyword">if</span> ListC[i] == <span class="number">0</span>:</span><br><span class="line">                ListC[i] = <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                ListC[i] = <span class="number">0</span></span><br><span class="line">    <span class="keyword">return</span> ListC</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span>(<span class="params">Threshold</span>):</span></span><br><span class="line">    ListA,ListB,length = CreList()</span><br><span class="line">    ListC = RandomChange(ListB,Threshold)</span><br><span class="line">    endList = []</span><br><span class="line">    count_0 = <span class="number">0</span></span><br><span class="line">    count_1 = <span class="number">0</span></span><br><span class="line">    new_length = <span class="built_in">len</span>(ListC) // length</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(new_length):</span><br><span class="line">            <span class="keyword">if</span> ListC[i + j*length] == <span class="number">0</span>:</span><br><span class="line">                count_0 += <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                count_1 += <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> count_0 &gt;= count_1:</span><br><span class="line">            endList.append(<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            endList.append(<span class="number">1</span>)</span><br><span class="line">        count_0 = <span class="number">0</span></span><br><span class="line">        count_1 = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(endList)):</span><br><span class="line">        <span class="keyword">if</span> endList[i] != ListA[i]:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">        <span class="keyword">elif</span> endList[i] == ListA[i] <span class="keyword">and</span> i == <span class="built_in">len</span>(endList)-<span class="number">1</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    count_True = <span class="number">0</span></span><br><span class="line">    count_False = <span class="number">0</span></span><br><span class="line">    Threshold = decimal.Decimal(<span class="string">&#x27;0.500&#x27;</span>)</span><br><span class="line">    <span class="keyword">while</span> count_True &lt; <span class="number">800</span>:</span><br><span class="line">        count_True = <span class="number">0</span></span><br><span class="line">        count_False = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1000</span>):</span><br><span class="line">            temp = main(Threshold)</span><br><span class="line">            <span class="keyword">if</span> temp == <span class="literal">True</span>:</span><br><span class="line">                count_True += <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                count_False += <span class="number">1</span></span><br><span class="line">        Threshold = Threshold - decimal.Decimal(<span class="string">&#x27;0.001&#x27;</span>)</span><br><span class="line">    print(<span class="string">&quot;The Best Threshold:&quot;</span>+<span class="built_in">str</span>(Threshold))</span><br><span class="line">        <span class="comment"># print(&quot;count_True:&quot;+str(count_True))</span></span><br><span class="line">        <span class="comment"># print(&quot;count_False:&quot;+str(count_False))</span></span><br></pre></td></tr></table></figure>
+
+
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Kale
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://kalew515.com/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/" title="对多数表决算法的探究">http://kalew515.com/2019/12/13/对多数表决算法的探究/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/08/%E4%BD%BF%E7%94%A8python%E7%AE%80%E5%8C%96%E5%B7%A5%E4%BD%9C/" rel="prev" title="使用python简化工作">
+      <i class="fa fa-chevron-left"></i> 使用python简化工作
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/12/23/LeetCode%E9%A2%98%E8%AE%B0/" rel="next" title="LeetCode题记">
+      LeetCode题记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Kale"
+      src="/images/kale.jpg">
+  <p class="site-author-name" itemprop="name">Kale</p>
+  <div class="site-description" itemprop="description">随笔</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Kale</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'MUzcPwyvUoU6stt1PKOcCYKN-gzGzoHsz',
+      appKey     : 'PsMBJlPVAFRMlvn3oYDPS68r',
+      placeholder: "QAQ",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/maodian.js"></script>
+</html>
