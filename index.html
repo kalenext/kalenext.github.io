@@ -148,6 +148,101 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://kalew515.com/2021/04/07/%E5%85%B3%E4%BA%8EGo%E7%9A%84map%E6%97%A0%E6%B3%95%E5%AF%B9%E7%BB%93%E6%9E%84%E4%BD%93%E5%80%BC%E5%B1%80%E9%83%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E6%8E%A2%E7%A9%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/kale.jpg">
+      <meta itemprop="name" content="Kale">
+      <meta itemprop="description" content="随笔">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Kale's Notes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/04/07/%E5%85%B3%E4%BA%8EGo%E7%9A%84map%E6%97%A0%E6%B3%95%E5%AF%B9%E7%BB%93%E6%9E%84%E4%BD%93%E5%80%BC%E5%B1%80%E9%83%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E6%8E%A2%E7%A9%B6/" class="post-title-link" itemprop="url">关于Go的map无法对结构体值局部赋值的探究</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-04-07 15:42:44 / 修改时间：16:35:09" itemprop="dateCreated datePublished" datetime="2021-04-07T15:42:44+08:00">2021-04-07</time>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/04/07/%E5%85%B3%E4%BA%8EGo%E7%9A%84map%E6%97%A0%E6%B3%95%E5%AF%B9%E7%BB%93%E6%9E%84%E4%BD%93%E5%80%BC%E5%B1%80%E9%83%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E6%8E%A2%E7%A9%B6/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/04/07/%E5%85%B3%E4%BA%8EGo%E7%9A%84map%E6%97%A0%E6%B3%95%E5%AF%B9%E7%BB%93%E6%9E%84%E4%BD%93%E5%80%BC%E5%B1%80%E9%83%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E6%8E%A2%E7%A9%B6/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <a id="more"></a>
+<p>在写项目过程中，遇到一个问题，即<code>go</code>的<code>map</code>如果<code>value</code>是结构体时，无法对结构体进行局部更新，即：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> demo <span class="keyword">struct</span> &#123;</span><br><span class="line">	a <span class="keyword">int</span></span><br><span class="line">	b <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> m = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]demo)</span><br><span class="line">	m[<span class="string">&quot;a&quot;</span>] = demo&#123;<span class="number">1</span>,<span class="number">2</span>&#125;</span><br><span class="line">	m[<span class="string">&quot;a&quot;</span>].a = <span class="number">3</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此代码无法通过编译，报错<code>cannot assign to struct field m[&quot;a&quot;].a in map</code>。<br>但是对<code>m[&quot;a&quot;]</code>进行一整个结构体的赋值则是允许的，在<code>java</code>中是可以局部赋值的，但是<code>go</code>中却不允许，很奇怪，于是查找解决方案。</p>
+<h1 id="map底层结构"><a href="#map底层结构" class="headerlink" title="map底层结构"></a>map底层结构</h1><p>首先讲<code>map</code>的底层结构，不同于<code>cpp</code>，<code>go</code>的<code>map</code>底层是<code>hash</code>表，初始化<code>map</code>时，就初始化了一个<code>hmap</code>，作为该<code>map</code>的头</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> hmap <span class="keyword">struct</span> &#123;</span><br><span class="line">	count     <span class="keyword">int</span></span><br><span class="line">	flags     <span class="keyword">uint8</span></span><br><span class="line">	B         <span class="keyword">uint8</span></span><br><span class="line">	noverflow <span class="keyword">uint16</span></span><br><span class="line">	hash0     <span class="keyword">uint32</span></span><br><span class="line"></span><br><span class="line">	buckets    unsafe.Pointer</span><br><span class="line">	oldbuckets unsafe.Pointer</span><br><span class="line">	nevacuate  <span class="keyword">uintptr</span></span><br><span class="line">	extra *mapextra</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上是<code>hmap</code>的结构体定义，关于各个值代表的含义网上有很多介绍，这里就不赘述。</p>
+<p><code>hmap</code>不存储具体的<code>key</code>和<code>value</code>，<code>key</code>和<code>value</code>由<code>bucket</code>存储，一个<code>bucket</code>可以存储8个<code>key</code>和8个<code>value</code>，其中<code>key</code>排列在一起，<code>value</code>排列在一起，这样的好处就是在<code>key</code>和<code>value</code>的长度不一致时，可以避免空间浪费。</p>
+<p>在<code>map</code>增加元素的过程中，可能会出现空间不够用的情况，这个时候就会进行扩容，这里比较不同的是，为了防止扩容带来的性能抖动，<code>go</code>选择了渐进式扩容，也就是在一次删除或者更新操作中不全部扩容完毕，而是进行一部分的扩容，扩容会将空间扩展为之前的两倍。</p>
+<p>在<code>hmap</code>中定义了一个<code>extra</code>字段，<code>extra</code>字段也是一个结构体：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> mapextra <span class="keyword">struct</span> &#123;</span><br><span class="line">	overflow    *[]*bmap</span><br><span class="line">	oldoverflow *[]*bmap</span><br><span class="line"></span><br><span class="line">	nextOverflow *bmap</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>overflow</code>是一个切片，在map的设计中，假如分配了2^B - 1个<code>bucket</code>，也会分配<code>2^B - 1</code>个<code>overflowBucket</code>，当<code>bucket</code>装满时，就链接到一个<code>overflowBucket</code>进行扩展。当<code>overflow</code>快存满时，也会进行扩容，这个时候不会引起翻倍扩容，而是等额扩容，因为此时很可能是进行了大量删除工作，相当于给内存做一次整理。</p>
+<h1 id="问题原因"><a href="#问题原因" class="headerlink" title="问题原因"></a>问题原因</h1><p>前面提到，<code>map</code>的更新等操作是可能会引起扩容的，所以内存地址会变。</p>
+<ol>
+<li>通过<code>m[&quot;a&quot;].a = 3</code>这种操作进行更新，如果不存在<code>m[&quot;a&quot;]</code>值，则会引起插入操作，这时没有一个完整结构体，可能会导致问题，如果存在，扩容时，<code>value</code>会在内存中移动，旧的指针地址在<code>map</code>改变时会无效，所以为了安全考虑，<code>go</code>禁止这样寻址，两个原因，如果对象不存在，则返回零值，零值是不可变对象，所以不能寻址，如果对象存在，因为<code>go</code>中<code>map</code>实现中元素的地址是变化的，这意味着寻址的结果是无意义的。</li>
+<li><code>golang</code>中没有引用类型，通过<code>m[&quot;a&quot;].a</code>取出来的是一份拷贝，修改这里的拷贝，实际修改的内容没有复制回原来的<code>struct</code>。</li>
+</ol>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>与<code>java</code>不同，<code>java</code>中存在引用类型，所以可以通过那种方式进行修改，就算会扩容，修改引用，原始数据总是跟着变。<br>解决方案有两种，一是进行全局赋值，例如：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tmp := m[<span class="string">&quot;a&quot;</span>]</span><br><span class="line">tmp.a = <span class="number">333</span></span><br><span class="line">m[<span class="string">&quot;a&quot;</span>] = tmp</span><br></pre></td></tr></table></figure>
+<p>这样可行的原因是相当于给<code>m[&quot;a&quot;]</code>赋新值了，不管<code>m[&quot;a&quot;]</code>存不存在都不会出现问题。</p>
+<p>或者将<code>value</code>改为结构体指针：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> m = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]*demo)</span><br><span class="line">m[<span class="string">&quot;a&quot;</span>] = &amp;demo&#123;<span class="number">1</span>, <span class="number">2</span>&#125;</span><br><span class="line">m[<span class="string">&quot;a&quot;</span>].a = <span class="number">333</span></span><br><span class="line">fmt.Println(m[<span class="string">&quot;a&quot;</span>])</span><br></pre></td></tr></table></figure>
+<p>这样在<code>map</code>中存储的就是结构体的指针，获取到的拷贝，也是对应地址，所以自然可以修改成功，不管<code>map</code>再怎么扩容，<code>key</code>对应的<code>value</code>总是不变的。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://kalew515.com/2021/02/02/Java%E7%9A%84HashMap%E6%8E%A2%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -908,96 +1003,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://kalew515.com/2020/03/14/redis%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/kale.jpg">
-      <meta itemprop="name" content="Kale">
-      <meta itemprop="description" content="随笔">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Kale's Notes">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/03/14/redis%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">redis学习</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-03-14 12:38:16" itemprop="dateCreated datePublished" datetime="2020-03-14T12:38:16+08:00">2020-03-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-01-11 21:22:41" itemprop="dateModified" datetime="2021-01-11T21:22:41+08:00">2021-01-11</time>
-              </span>
-
-          
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2020/03/14/redis%E5%AD%A6%E4%B9%A0/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/14/redis%E5%AD%A6%E4%B9%A0/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>之前在项目中使用了redis,但是只是简单使用了redis以避免后台数据库中表字段的冗余,现在重新学习一下redis.</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/03/14/redis%E5%AD%A6%E4%B9%A0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1065,7 +1074,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">21</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
