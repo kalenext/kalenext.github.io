@@ -9,7 +9,7 @@
     
     <title>
         
-            完成一个自动打卡脚本 |
+            关于摄影的一些知识 |
         
         Kale&#39;s Notes
     </title>
@@ -124,7 +124,7 @@
     <div class="article-content-container">
 
         <div class="article-title">
-            <span class="title-hover-animation">完成一个自动打卡脚本</span>
+            <span class="title-hover-animation">关于摄影的一些知识</span>
         </div>
 
         
@@ -140,7 +140,7 @@
                     <div class="meta-info">
                         <div class="article-meta-info">
     <span class="article-date article-meta-item">
-        <i class="fas fa-edit"></i>&nbsp;2021-09-29 09:49:34
+        <i class="fas fa-edit"></i>&nbsp;2022-04-21 22:49:17
     </span>
     
     
@@ -157,25 +157,29 @@
         
 
         <div class="article-content markdown-body">
-            <p>学校要求每天进行疫情打卡，但是打卡只是个流于形式的东西，意义并不大，反而每天打开微信打开应用打卡会卡一下，很影响体验，所以就写了一个自动打卡的脚本。</p>
+            <p>最近学习了一下摄影相关的基本知识，记录一下。</p>
 <a id="more"></a>
 
-<p>首先是在微信中打开手机上的页面，发现有一行小子是<code>网页由app.bupt.edu.cn</code>提供，于是在浏览器上打开该网页，需要登录，但是无法用学生的帐号进行登录，猜测应该是供教工使用的。</p>
-<p>在微信上选择用浏览打开防控填报页面，然后用浏览器打开，点击每日填报，出现<code>请在微信客户端中打开</code>：</p>
-<img src="/2021/09/29/%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E8%84%9A%E6%9C%AC/2021-09-29_10-02.png" class="" title="请在微信客户端中打开">
+<h2 id="什么是摄影"><a href="#什么是摄影" class="headerlink" title="什么是摄影"></a>什么是摄影</h2><p>摄影就是用设备对光线进行记录的过程，而不管是手机还是相机，光线记录过程中最重要的一个元器件就是感光元件，毕竟是要记录光线。</p>
+<p>所以说摄影其实就是光影的艺术，本质是在记录光，而记录光的过程就称为曝光。</p>
+<h2 id="曝光三要素"><a href="#曝光三要素" class="headerlink" title="曝光三要素"></a>曝光三要素</h2><p>曝光三要素是快门、光圈和ISO。</p>
+<h3 id="光圈"><a href="#光圈" class="headerlink" title="光圈"></a>光圈</h3><p>这里先介绍光圈，是因为光圈是光进入感光元件的第一道关卡，光圈越大，进来的光就越多，反之光就越少。光圈会影响两个因素，一是通光量，前面以及讲过，二是景深效果，大光圈会带来浅景深效果，什么叫浅景深能带来更强的虚化效果</p>
+<img src="/2022/04/21/%E5%85%B3%E4%BA%8E%E6%91%84%E5%BD%B1%E7%9A%84%E4%B8%80%E4%BA%9B%E7%9F%A5%E8%AF%86/%E5%9B%BE%E8%A1%A81.png" class="" title="光圈效果">
 
-<p>打开开发者工具，发现有一条请求的response是一个网页：</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attr">content</span>=<span class="string">&quot;width=device-width, initial-scale=1, user-scalable=0&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">&quot;text/javascript&quot;</span>&gt;</span></span><br><span class="line"><span class="javascript">            <span class="keyword">var</span> ua = navigator.userAgent.toLowerCase();</span></span><br><span class="line"><span class="javascript">            <span class="keyword">var</span> isWeixin = ua.indexOf(<span class="string">&#x27;micromessenger&#x27;</span>) != -<span class="number">1</span>;</span></span><br><span class="line"><span class="javascript">            <span class="keyword">var</span> isAndroid = ua.indexOf(<span class="string">&#x27;android&#x27;</span>) != -<span class="number">1</span>;</span></span><br><span class="line"><span class="javascript">            <span class="keyword">var</span> isIos = (ua.indexOf(<span class="string">&#x27;iphone&#x27;</span>) != -<span class="number">1</span>) || (ua.indexOf(<span class="string">&#x27;ipad&#x27;</span>) != -<span class="number">1</span>);</span></span><br><span class="line"><span class="javascript">            <span class="keyword">if</span> (!isWeixin) &#123;</span></span><br><span class="line"><span class="handlebars"><span class="xml">                document.head.innerHTML = &#x27;<span class="tag">&lt;<span class="name">title</span>&gt;</span>抱歉，出错了<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;utf-8&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attr">content</span>=<span class="string">&quot;width=device-width, initial-scale=1, user-scalable=0&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;stylesheet&quot;</span> <span class="attr">type</span>=<span class="string">&quot;text/css&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css&quot;</span>&gt;</span>&#x27;;</span></span></span><br><span class="line"><span class="handlebars"><span class="xml">                document.body.innerHTML = &#x27;<span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;weui_msg&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;weui_icon_area&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">i</span> <span class="attr">class</span>=<span class="string">&quot;weui_icon_info weui_icon_msg&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">i</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;weui_text_area&quot;</span>&gt;</span><span class="tag">&lt;<span class="name">h4</span> <span class="attr">class</span>=<span class="string">&quot;weui_msg_title&quot;</span>&gt;</span>请在微信客户端打开链接<span class="tag">&lt;/<span class="name">h4</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span>&#x27;;</span></span></span><br><span class="line">            &#125;</span><br><span class="line">        <span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>代码逻辑很简单，首先判断<code>userAgent</code>中是否带有<code>micromessenger</code>，如果没有则提示请在微信客户端打开链接，于是想到可以通过伪造<code>userAgent</code>来绕过验证。写一个网页部署到本地，在同一局域网下让微信去访问，查看<code>userAgent</code>，果然带有<code>micromessenger</code>。将浏览器的<code>userAgent</code>进行替换。</p>
-<p>发送请求后页面一片空白，不过查看当前链接：</p>
-<p><code>https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxf1bb5361ed86c6ec&amp;redirect_uri=https%3A%2F%2Fapp.bupt.edu.cn%2Fuc%2Fwap%2Fqy-login%2Foauth%3Fwid%3D66%26redirect%3Dhttps%253A%252F%252Fapp.bupt.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex&amp;response_type=code&amp;scope=snsapi_base&amp;connect_redirect=1#wechat_redirect</code>，</p>
-<p>进行urlcode解码之后为：</p>
-<p><code>https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxf1bb5361ed86c6ec&amp;redirect_uri=https://app.bupt.edu.cn/uc/wap/qy-login/oauth?wid=66&amp;redirect=https://app.bupt.edu.cn/ncov/wap/default/index&amp;response_type=code&amp;scope=snsapi_base</code></p>
-<p>发现有<code>https://app.bupt.edu.cn/ncov/wap/default/index</code>，于是进入这个页面，成功进入打卡页面：</p>
-<img src="/2021/09/29/%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E8%84%9A%E6%9C%AC/2021-09-29_10-21.png" class="" title="打卡页面">
-
-<p>查看页面源码，可以看到所有的信息…，其中有<code>oldInfo</code>字段为前一天提交的信息，将网络断掉发送一次请求发现提交的字段和<code>oldInfo</code>中的字段一模一样，于是直接对<code>oldInfo</code>中的时间戳和当前日期进行伪造再发送即可实现打卡。搭配<code>cron</code>设置定时任务即可。</p>
-<p>源码放到github上了:<a class="link"   target="_blank" rel="noopener" href="https://github.com/KaleW515/bupt-clockIn" >bupt-clockIn<i class="fas fa-external-link-alt"></i></a></p>
+<p>从图中可以看到，一个点如果没有对上焦，那么透过光圈到感光元件上是一块光斑，这个光斑随着光圈的变大而变大，如果光斑超过一个像素的大小，就会被多个像素吸收，从而形成虚化效果，而如果光斑能被一个像素死吸收，就不会产生虚化效果。所以，大光圈能带来浅景深效果。</p>
+<p>一般将F = 焦距 / 光圈直径，F值越小，代表光圈越大。</p>
+<h3 id="快门"><a href="#快门" class="headerlink" title="快门"></a>快门</h3><p>光通过光圈之后，就会经过快门，快门速度决定了有多少光到达感光元件，快门速度越快，光就越少，最后成像画面越暗，反之画面越亮。</p>
+<p>快门速度慢可以拍出很多有意思的照片，比如王家卫的经典风格就是通过慢快门速度拍摄的。但慢快门需要保持设备的稳定性，不然很容易就会形成模糊。</p>
+<h3 id="ISO"><a href="#ISO" class="headerlink" title="ISO"></a>ISO</h3><p>光通过快门之后，就会到达感光元件，而如果在特别暗的情况下，快门速度调慢，光圈开到最大仍然无法保证画面亮度，ISO就是解决这个问题的，ISO决定了感光元件对光的感知能力，ISO越大，感光元件对光的感知能力越强，会放大光，但同时，也会将一些噪音进行放大，所以大ISO会造成画面画质下降。</p>
+<h2 id="影响画质的因素"><a href="#影响画质的因素" class="headerlink" title="影响画质的因素"></a>影响画质的因素</h2><h3 id="感光元件大小"><a href="#感光元件大小" class="headerlink" title="感光元件大小"></a>感光元件大小</h3><p>前面提到，ISO的变大会导致画面的噪音被放大从而影响画质，其实无论怎么样，都会有噪音的存在，所要做的就是如何减少噪音。减少噪音最有效的就是减小感光元件上的像素密度，因为像素密度越小，单个像素就能接受到更多的光线，有一个概念叫“底大一级压死人”，其实说的就是这一点，同样像素的情况下，感光元件大，像素密度就小，成像素质也就更好。</p>
+<h3 id="动态范围"><a href="#动态范围" class="headerlink" title="动态范围"></a>动态范围</h3><p>一块感光元件上的像素，把每个像素想象成一口井，一次曝光过程中，接受暗部的井接受到了足够的光，并且接受亮部的井没有溢出，就称为动态范围高。如果接受暗部的井没接受到足够的光，接受亮部的井就已经溢出，就称为动态范围低。</p>
+<p>井的容积大小也会影响照片的宽容度，如果照片欠曝，那么只需要在后期过程中整体拉高亮度，这个亮度的拉高操作没有引起井的溢出，就可以保留原有的细节，不影响画质，这就称为宽容度高，反之则成为宽容度不够。过曝时，只需要整体拉低亮度，而没有导致井内光线耗尽，则称为宽容度高。</p>
+<p>有些亮度过高的照片，其实不一定是过曝了，每个像素代表一个颜色，只要不溢出，后期是可以通过降低亮度来还原细节的，但是如果像素比例失衡，全部溢出了，就称为过曝了。</p>
+<p>感光元件的大小其实也会影响动态范围，因为感光元件的大小决定了每一个像素可以吸收光线的多少，也就是井的容积。</p>
+<h2 id="画幅"><a href="#画幅" class="headerlink" title="画幅"></a>画幅</h2><p>前面多次提到感光元件，感光元件是成像的核心，而感光元件的大小，就称为画幅。</p>
+<p>画幅当然是越大越好，主流的画幅有APS-C画幅，全画幅，中画幅，其中全画幅是标准画幅，是根据胶片时代的胶片大小来定义的，由于APS-C画幅比较小，小画幅的视野就比全画幅要小，如果要得到全画幅的视野大小，就要拉长焦距，所以就有了等效焦距这个概念，APS-C画幅的焦距一般要乘上1.5才是全画幅的等效焦距。</p>
+<hr>
+<p>暂时就想到这么多，后面想到更多再进行记录，许愿上海疫情早点结束，许愿能顺利买到xs10:cry:</p>
 
         </div>
 
@@ -183,11 +187,11 @@
             <div class="post-copyright-info">
                 <div class="article-copyright-info-container">
     <ul>
-        <li>本文标题：完成一个自动打卡脚本</li>
+        <li>本文标题：关于摄影的一些知识</li>
         <li>本文作者：Kale</li>
-        <li>创建时间：2021-09-29 09:49:34</li>
+        <li>创建时间：2022-04-21 22:49:17</li>
         <li>
-            本文链接：https://kalew515.com/2021/09/29/完成一个自动打卡脚本/
+            本文链接：https://kalew515.com/2022/04/21/关于摄影的一些知识/
         </li>
         <li>
             版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -201,29 +205,14 @@
         
             <div class="article-nav">
                 
-                    <div class="article-prev">
-                        <a class="prev"
-                           rel="prev"
-                           href="/2021/10/08/%E5%85%B3%E4%BA%8EOAuth/"
-                        >
-                            <span class="left arrow-icon flex-center">
-                              <i class="fas fa-chevron-left"></i>
-                            </span>
-                            <span class="title flex-center">
-                                <span class="post-nav-title-item">关于OAuth</span>
-                                <span class="post-nav-item">上一篇</span>
-                            </span>
-                        </a>
-                    </div>
-                
                 
                     <div class="article-next">
                         <a class="next"
                            rel="next"
-                           href="/2021/09/06/%E5%8E%BB%E6%8E%89%E7%83%A6%E4%BA%BA%E7%9A%84csdn/"
+                           href="/2021/10/08/%E5%85%B3%E4%BA%8EOAuth/"
                         >
                             <span class="title flex-center">
-                                <span class="post-nav-title-item">去掉烦人的csdn</span>
+                                <span class="post-nav-title-item">关于OAuth</span>
                                 <span class="post-nav-item">下一篇</span>
                             </span>
                             <span class="right arrow-icon flex-center">
@@ -414,7 +403,7 @@
         <aside class="page-aside">
             <div class="post-toc-wrap">
     <div class="post-toc">
-        
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%91%84%E5%BD%B1"><span class="nav-text">什么是摄影</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%9D%E5%85%89%E4%B8%89%E8%A6%81%E7%B4%A0"><span class="nav-text">曝光三要素</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%89%E5%9C%88"><span class="nav-text">光圈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E9%97%A8"><span class="nav-text">快门</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ISO"><span class="nav-text">ISO</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BD%B1%E5%93%8D%E7%94%BB%E8%B4%A8%E7%9A%84%E5%9B%A0%E7%B4%A0"><span class="nav-text">影响画质的因素</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%84%9F%E5%85%89%E5%85%83%E4%BB%B6%E5%A4%A7%E5%B0%8F"><span class="nav-text">感光元件大小</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E8%8C%83%E5%9B%B4"><span class="nav-text">动态范围</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%BB%E5%B9%85"><span class="nav-text">画幅</span></a></li></ol>
     </div>
 </div>
         </aside>
