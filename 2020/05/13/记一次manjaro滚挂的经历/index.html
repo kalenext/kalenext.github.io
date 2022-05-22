@@ -157,15 +157,9 @@
         
 
         <div class="article-content markdown-body">
-            <p>用了manjaro有7个多月了,连日用感受都还没写,就已经滚挂了,在今天,估计是我下午的时候一边写别的一边大更新,中途确实报错好多次,但是都重新滚了,最后也成功,晚上回来开机,发现就开不了机了…</p>
-<a id="more"></a>
-<p>开机后可以进入引导模式,但是无法进入系统,提示:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Error File ‘/boot/vmlinuz-5.4-x86_64’ not found</span><br><span class="line">you need to load kernel first</span><br></pre></td></tr></table></figure>
-<p>提示内核找不到.<br>到社区以及网上找了很多解决方案,要么太长,要么根本没解决,但是共同点都是需要先安装一个manjaro启动盘,想想也对,进终端才好操作.</p>
+            <p>用了manjaro有7个多月了,连日用感受都还没写,就已经滚挂了,在今天,估计是我下午的时候一边写别的一边大更新,中途确实报错好多次,但是都重新滚了,最后也成功,晚上回来开机,发现就开不了机了…<br><a id="more"></a><br>开机后可以进入引导模式,但是无法进入系统,提示:<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Error File ‘/boot/vmlinuz-5.4-x86_64’ not found</span><br><span class="line">you need to load kernel first</span><br></pre></td></tr></table></figure><br>提示内核找不到.<br>到社区以及网上找了很多解决方案,要么太长,要么根本没解决,但是共同点都是需要先安装一个manjaro启动盘,想想也对,进终端才好操作.</p>
 <p>于是用u盘安装了一个manjaro启动盘,然后居然在csdn上找到了解决方案~</p>
-<p>步骤如下:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo fdisk -l # 这里找到linux安装盘,例如/dev/sdb2</span><br><span class="line">sudo mount -t ext4 /dev/sdb2 /mnt</span><br><span class="line">sudo pacman -Sy arch-install-scripts # 这一步过慢可以先换源</span><br><span class="line">arch-chroot /mnt # 这一步必须用arch-chroot</span><br><span class="line">sudo pacman -Sy linux # 这一步其实相当于重新安装内核了</span><br></pre></td></tr></table></figure>
-<p>然后重启就可以了.</p>
+<p>步骤如下:<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo fdisk -l # 这里找到linux安装盘,例如/dev/sdb2</span><br><span class="line">sudo mount -t ext4 /dev/sdb2 /mnt</span><br><span class="line">sudo pacman -Sy arch-install-scripts # 这一步过慢可以先换源</span><br><span class="line">arch-chroot /mnt # 这一步必须用arch-chroot</span><br><span class="line">sudo pacman -Sy linux # 这一步其实相当于重新安装内核了</span><br></pre></td></tr></table></figure><br>然后重启就可以了.</p>
 <p>其实也不是大问题,按道理现在应该可以独立解决这种问题了,还是进不去系统慌了吧,毕竟重要文件实在太多了,还是得买个硬盘备份一下233</p>
 <hr>
 <p>好久没更新了,前段时间有点颓废,接下来加油吧</p>
@@ -460,6 +454,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

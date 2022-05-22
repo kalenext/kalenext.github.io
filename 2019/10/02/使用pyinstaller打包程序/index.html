@@ -158,21 +158,17 @@
 
         <div class="article-content markdown-body">
             <p>最近在使用<code>pyinstaller</code>打包程序的时候，遇到了很多问题。</p>
-<h2 id="路径问题"><a href="#路径问题" class="headerlink" title="路径问题"></a>路径问题</h2><p>平时在写程序的时候，涉及到文件的读取和写入时，用绝对路径较多，但是绝对路径只在自己电脑可以正常运行，换一个环境就会报错，于是了解了一下相对路径。</p>
-<a id="more"></a>
-<p>相对路径就是指由这个文件所在的路径引起的跟其它文件（或文件夹）的路径关系。</p>
+<h2 id="路径问题"><a href="#路径问题" class="headerlink" title="路径问题"></a>路径问题</h2><p>平时在写程序的时候，涉及到文件的读取和写入时，用绝对路径较多，但是绝对路径只在自己电脑可以正常运行，换一个环境就会报错，于是了解了一下相对路径。<br><a id="more"></a><br>相对路径就是指由这个文件所在的路径引起的跟其它文件（或文件夹）的路径关系。</p>
 <p>在相对路径中，<code>/</code>是指根目录开始，<code>./</code>表示从当前目录开始，<code>../</code>表示从上一级目录开始。</p>
 <p>但是这种写法在打包成exe可执行程序的时候就会出现问题，原因是打包成exe可执行文件后目录发生改变。所以可以用另外一种方式得到可执行文件的路径，根据可执行文件的路径来推出其余所需文件的路径，这种方法打包好之后可以在别的环境正常运行。下面上代码：</p>
-<p>创建一个.py文件，功能是得到目前文件的路径，用以被别的文件调用（也可以在需要获取路径的.py文件里写成函数形式）</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">app_path</span>():</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">hasattr</span>(sys, <span class="string">&#x27;frozen&#x27;</span>):</span><br><span class="line">		<span class="keyword">return</span> os.path.dirname(sys.executable)</span><br><span class="line">	<span class="keyword">return</span> os.path.dirname(__file__) </span><br></pre></td></tr></table></figure>
-
+<p>创建一个.py文件，功能是得到目前文件的路径，用以被别的文件调用（也可以在需要获取路径的.py文件里写成函数形式）<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">app_path</span>():</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">hasattr</span>(sys, <span class="string">&#x27;frozen&#x27;</span>):</span><br><span class="line">		<span class="keyword">return</span> os.path.dirname(sys.executable)</span><br><span class="line">	<span class="keyword">return</span> os.path.dirname(__file__) </span><br></pre></td></tr></table></figure></p>
 <p>别的文件需要使用时，直接调用这个函数即可，完美解决路径问题。</p>
 <h2 id="文件过大"><a href="#文件过大" class="headerlink" title="文件过大"></a>文件过大</h2><p>第一次使用<code>pyinstaller -D xxx.py</code>进行打包后，打包过程很慢，打包后的程序有600多mb，打开<code>dist</code>文件夹，发现有很多我没有用到的包被导入，例如<code>numpy</code>等，网上了解到打包后文件过大的原因是因为安装python时用的是anaconda，集成了很多包，而在使用<code>pyinstaller</code>打包时，很多没必要用到的库也被一并打包进去，所以打包后的文件过大。</p>
 <p>解决方案是安装一个叫<code>pipenv</code>的库，这个库的作用是创建一个python的虚拟环境。</p>
 <ul>
 <li><p>首先在任意目录创建一个文件夹，用来储存虚拟环境</p>
 </li>
-<li><p>cd到该文件夹，输入<code>pip install pipenv</code>，安装<code> pipenv</code>库</p>
+<li><p>cd到该文件夹，输入<code>pip install pipenv</code>，安装<code>pipenv</code>库</p>
 </li>
 <li><p><code>pipenv shell</code>进入虚拟环境，然后安装需要用到的库，比如我需要用到<code>jieba</code>库，输入<code>pip install jieba</code>即可，安装好需要用到的库之后，再<code>pyinstaller -D xxx.py --noconsole</code>进行打包这里的<code>--noconsole</code>是取消程序运行时的控制台显示</p>
 </li>
@@ -463,6 +459,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

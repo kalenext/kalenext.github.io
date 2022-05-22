@@ -157,9 +157,7 @@
         
 
         <div class="article-content markdown-body">
-            <p>因为课程的原因，学习了一下OAuth协议，看了很多资料，发现网上的中文资源大多讲得都非常模糊，所以做一个整理。</p>
-<a id="more"></a>
-<p>OAuth协议主要是为了解决授权问题，当需要使用到一个第三方网站的服务时，我们可能需要在这个网站进行注册，或者说如果一个网站需要用到另外一个网站的受保护的资源时，可能没有权限这样做，OAuth协议很好地解决了这些问题。</p>
+            <p>因为课程的原因，学习了一下OAuth协议，看了很多资料，发现网上的中文资源大多讲得都非常模糊，所以做一个整理。<br><a id="more"></a><br>OAuth协议主要是为了解决授权问题，当需要使用到一个第三方网站的服务时，我们可能需要在这个网站进行注册，或者说如果一个网站需要用到另外一个网站的受保护的资源时，可能没有权限这样做，OAuth协议很好地解决了这些问题。</p>
 <h2 id="OAuth1-0"><a href="#OAuth1-0" class="headerlink" title="OAuth1.0"></a>OAuth1.0</h2><h3 id="角色分类"><a href="#角色分类" class="headerlink" title="角色分类"></a>角色分类</h3><p>在OAuth1.0中，将参与协议的角色分为了三类：</p>
 <figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- service provider     <span class="regexp">//</span> 服务提供商</span><br><span class="line">- consumer             <span class="regexp">//</span> 接入者</span><br><span class="line">- user                 <span class="regexp">//</span> 用户</span><br></pre></td></tr></table></figure>
 <h3 id="协议流程"><a href="#协议流程" class="headerlink" title="协议流程"></a>协议流程</h3><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">     consumer                        service provider</span><br><span class="line"></span><br><span class="line">+------------------+               +------------------+</span><br><span class="line">|<span class="string">      request     </span>|<span class="string">               </span>|<span class="string">       grant      </span>|</span><br><span class="line">|<span class="string">   request token  +-------A------&gt;</span>|<span class="string">   request token  </span>|</span><br><span class="line">+------------------+               +--------+---------+</span><br><span class="line">                                            |</span><br><span class="line"><span class="string">                                            </span>|</span><br><span class="line">+------------------+                        |</span><br><span class="line">|<span class="string">  direct user to  </span>|<span class="string"> &lt;-----B----------------+</span></span><br><span class="line">|<span class="string"> service provider </span>|</span><br><span class="line">+-------+----------+               +------------------+</span><br><span class="line">        |<span class="string">                          </span>|<span class="string">   obtain user    </span>|</span><br><span class="line">        +------------------C------&gt;|<span class="string">   authorization  </span>|</span><br><span class="line">                                   +--------+---------+</span><br><span class="line">                                            |</span><br><span class="line"><span class="string">                                   +--------v---------+</span></span><br><span class="line"><span class="string">                                   </span>|<span class="string">  direct user to  </span>|</span><br><span class="line">                                   |<span class="string">     consumer     </span>|</span><br><span class="line">+------------------+               +--------+---------+</span><br><span class="line">|<span class="string">     request      </span>|<span class="string">                        </span>|</span><br><span class="line">|<span class="string">   access token   </span>|<span class="string">&lt;------D----------------+</span></span><br><span class="line"><span class="string">+-------+----------+</span></span><br><span class="line"><span class="string">        </span>|<span class="string">                          +------------------+</span></span><br><span class="line"><span class="string">        </span>|<span class="string">                          </span>|<span class="string">      grant       </span>|</span><br><span class="line">        +------------------E------&gt;|<span class="string">   access token   </span>|</span><br><span class="line">                                   +--------+---------+</span><br><span class="line">+------------------+                        |</span><br><span class="line">|<span class="string"> access protected </span>|<span class="string">                        </span>|</span><br><span class="line">|<span class="string">   access token   </span>|<span class="string">&lt;------F----------------+</span></span><br><span class="line"><span class="string">+-------+----------+</span></span><br><span class="line"><span class="string">        </span>|</span><br><span class="line">        +------------------G----------------&gt;</span><br></pre></td></tr></table></figure>
@@ -248,8 +246,7 @@
 </li>
 <li><p>对移动端的应用的支持不够好，首先callback字段无法设置为相应的url，需要设置为oob，另外是返回的oauth_verifier字段可能需要以明文的方式显示给用户，并引导用户粘贴到待授权应用中，需要用户在应用与浏览器之间手动切换，影响了用户体验</p>
 </li>
-<li><p>签名逻辑过于复杂</p>
-</li>
+<li>签名逻辑过于复杂</li>
 </ul>
 <h2 id="OAuth2-0"><a href="#OAuth2-0" class="headerlink" title="OAuth2.0"></a>OAuth2.0</h2><p>由于OAuth1.0a版本的签名逻辑复杂，所以提出了OAuth2.0版本</p>
 <h3 id="角色分类-1"><a href="#角色分类-1" class="headerlink" title="角色分类"></a>角色分类</h3><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- resource owner       <span class="regexp">//</span> 资源所有者</span><br><span class="line">- resource server      <span class="regexp">//</span> 资源服务器</span><br><span class="line">- client               <span class="regexp">//</span> 接入者</span><br><span class="line">- authorization server <span class="regexp">//</span> 认证服务器，authorization server和resource server可以是一个服务器也可以是单独的实体</span><br></pre></td></tr></table></figure>
@@ -312,8 +309,7 @@
 <figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">HTTP/1.1</span> <span class="number">302</span> Found</span><br><span class="line"><span class="attribute">Location</span><span class="punctuation">: </span>http://example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&amp;state=xyz&amp;token_type=example&amp;expires_in=3600</span><br></pre></td></tr></table></figure></li>
 </ul>
 </li>
-<li><p>当请求发生错误时，返回结果同上</p>
-</li>
+<li>当请求发生错误时，返回结果同上</li>
 </ol>
 <h4 id="Resource-Owner-Password-Credentials-Grant"><a href="#Resource-Owner-Password-Credentials-Grant" class="headerlink" title="Resource Owner Password Credentials Grant"></a>Resource Owner Password Credentials Grant</h4><p>此模式适用于client与resource owner高度可信，比如设备操作系统或者高权限的应用程序，仅在别的模式不能使用时才能使用该模式</p>
 <h5 id="流程-2"><a href="#流程-2" class="headerlink" title="流程"></a>流程</h5><ol>
@@ -348,8 +344,7 @@
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/token</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>server.example.com</span><br><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line">grant_type=refresh_token&amp;refresh_token=tGzv3JOkF0XG5Qx2TlKWIA</span><br></pre></td></tr></table></figure></li>
 </ul>
 </li>
-<li><p>authorization server对client身份进行验证，如果验证通过且该refresh_token有效，则返回一个新的access token，此时有可能会新返回一个新的refresh token，client必须用新的refresh token替换旧的，authorization server必须在返回了新的refresh token后立即剥夺旧的refresh token的权限</p>
-</li>
+<li>authorization server对client身份进行验证，如果验证通过且该refresh_token有效，则返回一个新的access token，此时有可能会新返回一个新的refresh token，client必须用新的refresh token替换旧的，authorization server必须在返回了新的refresh token后立即剥夺旧的refresh token的权限</li>
 </ul>
 <h3 id="关于返回的access-token"><a href="#关于返回的access-token" class="headerlink" title="关于返回的access token"></a>关于返回的access token</h3><p>返回的access token可能有特定的格式，如果client不理解，则不能使用该access token，比如bearer类型的通过简单地在请求中包含access token来使用</p>
 <figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/resource/1</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>example.com</span><br><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>Bearer mF_9.B5f-4.1JqM</span><br></pre></td></tr></table></figure>
@@ -707,6 +702,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

@@ -157,14 +157,8 @@
         
 
         <div class="article-content markdown-body">
-            <p>项目中增加了WebSocket连接,在本地是可以正常使用的,但是部署到服务器上就会出错.提示<code>Error during WebSocket handshake: Unexpected response code: 400</code></p>
-<a id="more"></a>
-<p>看了很多网上的解决方案,觉得是nginx的问题,在<code>conf</code>文件中的<code>location /</code>中加入</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">proxy_http_version 1.1;</span><br><span class="line">proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">proxy_set_header Connection &quot;upgrade&quot;;</span><br></pre></td></tr></table></figure>
-<p>这算是比较统一的解决方案了,但是仍然失败.nginx版本不会有问题.再检查服务器,发现网上很多人说阿里云不支持WebSocket.这也是个坑.很奇怪,但是后来看到19年3月的消息说阿里云全面支持WebSocket,这就排除了服务器问题.</p>
-<p>浪费了很长时间,不用nginx的时候,直接启动项目是正常的,所以一直认为是nginx的问题.踩了很多坑,才发现是uwsgi的问题,还需要在<code>setting.py</code>文件里加入</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WEBSOCKET_FACTORY_CLASS = <span class="string">&#x27;dwebsocket.backends.uwsgi.factory.uWsgiWebSocketFactory&#x27;</span></span><br></pre></td></tr></table></figure>
-<p>重启uwsgi.</p>
+            <p>项目中增加了WebSocket连接,在本地是可以正常使用的,但是部署到服务器上就会出错.提示<code>Error during WebSocket handshake: Unexpected response code: 400</code><br><a id="more"></a><br>看了很多网上的解决方案,觉得是nginx的问题,在<code>conf</code>文件中的<code>location /</code>中加入<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">proxy_http_version 1.1;</span><br><span class="line">proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">proxy_set_header Connection &quot;upgrade&quot;;</span><br></pre></td></tr></table></figure><br>这算是比较统一的解决方案了,但是仍然失败.nginx版本不会有问题.再检查服务器,发现网上很多人说阿里云不支持WebSocket.这也是个坑.很奇怪,但是后来看到19年3月的消息说阿里云全面支持WebSocket,这就排除了服务器问题.</p>
+<p>浪费了很长时间,不用nginx的时候,直接启动项目是正常的,所以一直认为是nginx的问题.踩了很多坑,才发现是uwsgi的问题,还需要在<code>setting.py</code>文件里加入<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">WEBSOCKET_FACTORY_CLASS = <span class="string">&#x27;dwebsocket.backends.uwsgi.factory.uWsgiWebSocketFactory&#x27;</span></span><br></pre></td></tr></table></figure><br>重启uwsgi.</p>
 <p>WebSocket正常<br><code>Status Code: 101 Switching Protocols</code></p>
 
         </div>
@@ -457,6 +451,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

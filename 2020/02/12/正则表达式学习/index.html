@@ -157,8 +157,7 @@
         
 
         <div class="article-content markdown-body">
-            <p>正则表达式很实用,之前也用过,不过是跟着网上的教程拼出来的,所以今天来系统学习一下正则表达式.</p>
-<a id="more"></a>
+            <p>正则表达式很实用,之前也用过,不过是跟着网上的教程拼出来的,所以今天来系统学习一下正则表达式.<br><a id="more"></a></p>
 <h1 id="元字符"><a href="#元字符" class="headerlink" title="元字符"></a>元字符</h1><p>正则表达式有元字符,正则表达式就是由普通字符和元字符组成,普通字符没有特殊含义,而元字符都是有着特殊的含义,下面是一些元字符的含义.有个规律是很多的元字符转换大小写之后就会变成相反的含义.</p>
 <ol>
 <li><p><code>\d</code></p>
@@ -186,7 +185,7 @@
 <p><code>&#123;,&#125;</code>可以说是非常强大了,它可以替代前面很多元字符的功能,不过为了清晰,还是会使用更加简洁的写法.<code>&#123;,&#125;</code>的作用是指定重复范围,比如<code>&#123;1,&#125;</code>则是与<code>+</code>号的功能一致,可以出现一次或者多次.</p>
 </li>
 <li><p><code>[,]</code></p>
-<p> <code>[,]</code>是字符集合,给要匹配的字符指定一个范围,比如<code>[a,z]</code>则是匹配所有所有在a到z之间的字符.一个<code>[,]</code>匹配一个字符,可以和上面的元字符结合使用用来表示字符串.</p>
+<p><code>[,]</code>是字符集合,给要匹配的字符指定一个范围,比如<code>[a,z]</code>则是匹配所有所有在a到z之间的字符.一个<code>[,]</code>匹配一个字符,可以和上面的元字符结合使用用来表示字符串.</p>
 </li>
 <li><p><code>(,)</code></p>
 <p>分组匹配,可以取出匹配到的元素.</p>
@@ -484,6 +483,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

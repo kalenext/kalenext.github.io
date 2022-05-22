@@ -159,7 +159,6 @@
         <div class="article-content markdown-body">
             <p>详细学习了一下分布式领域的paxos算法和raft算法，下面分别阐述。</p>
 <a id="more"></a>
-
 <h2 id="需要解决的问题"><a href="#需要解决的问题" class="headerlink" title="需要解决的问题"></a>需要解决的问题</h2><p>为了让系统具有高可用性，出现了分布式系统，但分布式系统的一致性是个很难解决的问题，而这两个算法都是分布式领域的共识算法，以让整个系统保持强一致性。</p>
 <h2 id="Paxos算法"><a href="#Paxos算法" class="headerlink" title="Paxos算法"></a>Paxos算法</h2><p>paxos算法是最早提出的共识算法，后面的算法也大多都是根据paxos算法演变而来。</p>
 <p>paxos算法将系统中的角色分为了三种：</p>
@@ -247,16 +246,20 @@
 <h3 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h3><h4 id="Term"><a href="#Term" class="headerlink" title="Term"></a>Term</h4><p>term的概念在Raft算法中非常重要，Raft将时间分为一段一段的term，每段term可以是任意长的时间，但都以leader竞选开始。</p>
 <p>如下图所示：</p>
 <img src="/2022/05/17/%E4%BB%8Epaxos%E5%88%B0raft/image-20220518181522870.png" class="" title="term">
-
 <p>系统中的每台server都会存储一个current term，该编号随着时间单调增加，只要server之间通信，就会交换该值，较小的则会更新自己的term，如果leader或者candidate发现自己的term过时，则会恢复成follower状态，如果server收到一个带有过时term的请求，则会拒绝请求。</p>
 <h4 id="Leader-Election"><a href="#Leader-Election" class="headerlink" title="Leader Election"></a>Leader Election</h4><p>Raft算法使用heartbeat机制来触发leader选举，当server启动时，默认都为follower。只要server从leader或者candidate处收到rpc，则保持follower状态，一段<code>election timeout</code>时间内没有收到rpc消息，则会转变为candidate状态并进行leader选举，所以作为leader需要定时给follower发送heartbeat。</p>
 <p>在进行leader选举时，follower增加当前的current term，然后转变为candidate状态，并发送rpc给别的server，直到（1）赢得选举，（2）另外一个server成为leader，（3）一段时间没有server赢得选举；三种情况下这一次竞选活动结束。</p>
 <p>投票机制是<code>first-come-first-served</code>，对于（1）的情况，candidate成为leader，发送rpc心跳给别的server，以让他们转为follower状态；对于（2）的情况，在等待投票时，可能收到另外一个声称自己是leader的server的心跳rpc，如果其term不小于当前自己的term，则自己转为follower状态；对于（3）的情况，所有的candidate都需要暂停选举过程，增加自己的term，等待150-300ms的随机时间进行新一轮选举。</p>
 <h4 id="Log-Replication"><a href="#Log-Replication" class="headerlink" title="Log Replication"></a>Log Replication</h4><p>整个系统，由leader与client进行交互，当client发送request，可能是set 5，等等，称为日志，leader会将日志以rpc的形式发送给follower，如果大多数follower成功收到，则leader向client返回该request的状态，否则将一直进行重试，直到所有follower成功收到。</p>
-<p>log不是一发送给follower就是提交状态，leader在第一轮append rpc同步日志后，等待follower返回，才能统计是否已经同步到大多数follower上，从而决定是否已提交，在下一次rpc，才算真正提交状态。</p>
+<p>关于log entry的提交，具体的提交过程为：</p>
+<ul>
+<li>client发送请求给leader，leader收到后添加到自己的日志中，此时为uncommitted状态，所以还不能通过这个log来执行具体操作比如更改值</li>
+<li>leader将其通过rpc的方式发送给follower，如果收到大部分follower的回复，leader将其置为committed状态，并完成操作</li>
+<li>然后leader通过rpc的方式通知follower该log entry已经提交</li>
+<li>共识完成</li>
+</ul>
 <p>如图所示，每个log都包含一个编号，这个编号是非常重要的：</p>
 <img src="/2022/05/17/%E4%BB%8Epaxos%E5%88%B0raft/image-20220518214526730.png" class="" title="log">
-
 <p>Raft算法保证log的顺序，如果两个log完全一致，那么该日志前面的序列也完全一致。如何保证该特性，Raft算法通过consistency check来完成，当leader发送rpc增加日志时，会发送当前最新的log的term，index，follower收到后，如果在自己的序列中没有找到对应log，则拒绝这次rpc。</p>
 <h5 id="问题-4"><a href="#问题-4" class="headerlink" title="问题"></a>问题</h5><p>理想状态下，leader每次增加日志的rpc都被follower接受，系统不会出现问题，但是如果leader崩溃，可能有log没有发送给follower，而此时follower进行竞选成为新一任leader，可能会造成一些log的丢失。</p>
 <h5 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h5><p>在Raft算法中，leader通过强行复制自己的log到follower上来解决这个问题，leader会维护一个<code>nextIndex</code>，表示下一个要发送的log的index是什么，考虑上述故障情况，如果在进行rpc时，发现follower的日志与leader的日志不一致，一致性检查会失败，leader将自己的<code>nextIndex</code>递减，再次进行此过程，直到成功，成功时，follwer删除所有冲突的日志，在这个term内，follower都将与leader保持一致。</p>
@@ -264,7 +267,6 @@
 <h6 id="解决方案-1"><a href="#解决方案-1" class="headerlink" title="解决方案"></a>解决方案</h6><p>为了解决这个问题，Raft规定candidate的日志必须包含大多数follower的日志，如果follower发现本身的log比当前发送rpc的candidate的log更新，则拒绝投票。</p>
 <h5 id="提交以前任期内的log"><a href="#提交以前任期内的log" class="headerlink" title="提交以前任期内的log"></a>提交以前任期内的log</h5><h6 id="问题-6"><a href="#问题-6" class="headerlink" title="问题"></a>问题</h6><p>考虑一个问题，如下图：</p>
 <img src="/2022/05/17/%E4%BB%8Epaxos%E5%88%B0raft/image-20220519004330403.png" class="" title="logbeforeterm">
-
 <p>（S1-S5代表server，颜色代表日志，方块内数字代表term）</p>
 <ol>
 <li>在a阶段，S1是leader，收到一个log，将其复制到S2中后宕机</li>
@@ -275,7 +277,6 @@
 <p>在上述流程中，黄色方块的log被覆盖了，违背了安全性原则。</p>
 <h6 id="解决方案-2"><a href="#解决方案-2" class="headerlink" title="解决方案"></a>解决方案</h6><p>Raft算法从不通过计算副本来提交以前任期的log，只提交当前任期的log，考虑上述流程，如下图：</p>
 <img src="/2022/05/17/%E4%BB%8Epaxos%E5%88%B0raft/image-20220519005224526.png" class="" title="logbeforetermanswer">
-
 <p>在c阶段，S1为leader，不主动提交以前任期的log，即黄色方块，而是在提交当前任期的红色方块的时候，顺带复制以前任期的log，以达到e阶段的效果，可以是当选后立即同步一条空操作log。</p>
 <h5 id="集群成员变更"><a href="#集群成员变更" class="headerlink" title="集群成员变更"></a>集群成员变更</h5><p>很多时候，需要对整个集群进行配置变更，比如添加server等。</p>
 <h6 id="问题-7"><a href="#问题-7" class="headerlink" title="问题"></a>问题</h6><p>考虑这样一个问题，添加server从3台到5台，配置变更后，在某时间点，可能存在两个leader，这是分布式领域的脑裂问题。</p>
@@ -562,6 +563,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

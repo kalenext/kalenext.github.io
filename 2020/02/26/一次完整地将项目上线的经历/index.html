@@ -157,8 +157,7 @@
         
 
         <div class="article-content markdown-body">
-            <p>之前看到计网的课程设计指导书上面写了鼓励自拟题目,想着现在正好是疫情期间,要不就写个和疫情相关的吧,所以之前就开始写计网的项目了.写了4天多吧,终于写完了,刚好撸了个服务器,就想着放到服务器,但是遇到了很多问题,现在把过程记录下来.</p>
-<a id="more"></a>
+            <p>之前看到计网的课程设计指导书上面写了鼓励自拟题目,想着现在正好是疫情期间,要不就写个和疫情相关的吧,所以之前就开始写计网的项目了.写了4天多吧,终于写完了,刚好撸了个服务器,就想着放到服务器,但是遇到了很多问题,现在把过程记录下来.<br><a id="more"></a></p>
 <h1 id="项目设计"><a href="#项目设计" class="headerlink" title="项目设计"></a>项目设计</h1><p>既然涉及到疫情,那肯定需要疫情的数据,数据哪里来的问题,首先的想法就是从现有的百度和丁香医生等平台去爬取数据,不过百度和丁香医生的接口都没有公开,只有网易的接口是可以看到的,所以就选了网易的接口,后端爬取数据送到前端.</p>
 <p>另外疫情部分除了疫情数据之外,也用echarts画了一张折线图,echarts的文档实在是太多了,花了很长时间才画好图片.</p>
 <p>疫情部分结束后,项目的核心其实还是留言板,留言板最开始只设计了留言和回复功能,慢慢加上了点赞,点踩,设置头像功能.这一块最主要的就是数据库的设计,数据库设计方面,将留言板分成了三张表,一张留言表,一张回复表,一张点赞点踩记录表,这样就可以很清晰地实现需要的功能.</p>
@@ -475,6 +474,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

@@ -157,8 +157,7 @@
         
 
         <div class="article-content markdown-body">
-            <p>操作系统课设需要在网页里面选题,学python很久了,但是都一直没用过selenium和request库,这次就决定用一下,写一个抢题脚本.</p>
-<a id="more"></a>
+            <p>操作系统课设需要在网页里面选题,学python很久了,但是都一直没用过selenium和request库,这次就决定用一下,写一个抢题脚本.<br><a id="more"></a></p>
 <h1 id="selenium模拟登陆"><a href="#selenium模拟登陆" class="headerlink" title="selenium模拟登陆"></a>selenium模拟登陆</h1><p>selenium是一个用于web应用程序测试的工具.运行时有可视化界面,可以自动化操作,于是想到可以用来模拟用户的点击操作.</p>
 <p>用到了selenium里的 <code>webdriver</code> 首先抽象出一个浏览器变量,再通过 <code>get</code> 方法获取要登录的网址,接下来就可以进行操作了.</p>
 <p>使用selenium的过程中我的思想主要是定位到具体的属性,然后传值或者点击,用以模拟用户的操作.</p>
@@ -466,6 +465,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

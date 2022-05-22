@@ -157,23 +157,28 @@
         
 
         <div class="article-content markdown-body">
-            <p>在做大创的时候接触到多数表决算法，想象中应该是很可靠的算法，但是在测试的时候发现并不可靠，于是做一个试验来探究一下多数表决算法的可靠性。</p>
-<a id="more"></a>
+            <p>在做大创的时候接触到多数表决算法，想象中应该是很可靠的算法，但是在测试的时候发现并不可靠，于是做一个试验来探究一下多数表决算法的可靠性。<br><a id="more"></a></p>
 <ul>
-<li><p>先生成一个只含有0和1的列表，长度为10，重复50次得到一个新的列表，遍历新列表并不断生成随机数，根据随机数的值来改变对应的值。首先将阈值设为0.2，重复测试1000次，结果为<br><code>count_True:1000 count_False:0</code><br>可以看到测试1000次的情况下都是前后不变，可以认为在数据受影响程度为20%以下时多数表决算法是可靠的。</p>
+<li><p>先生成一个只含有0和1的列表，长度为10，重复50次得到一个新的列表，遍历新列表并不断生成随机数，根据随机数的值来改变对应的值。首先将阈值设为0.2，重复测试1000次，结果为<br><code>count_True:1000
+count_False:0</code><br>可以看到测试1000次的情况下都是前后不变，可以认为在数据受影响程度为20%以下时多数表决算法是可靠的。</p>
 </li>
-<li><p>将阈值改为0.3，测试1000次，结果为<br><code>count_True:979 count_False:21</code>，正确率为98%，可以认为这种情况下算法可靠。</p>
+<li><p>将阈值改为0.3，测试1000次，结果为<br><code>count_True:979
+count_False:21</code>，正确率为98%，可以认为这种情况下算法可靠。</p>
 </li>
-<li><p>继续测试，将阈值改为0.4，测试1000次，结果为<br><code>count_True:454 count_False:546</code><br>可以看到结果不可靠。</p>
+<li><p>继续测试，将阈值改为0.4，测试1000次，结果为<br><code>count_True:454
+count_False:546</code><br>可以看到结果不可靠。</p>
 </li>
 </ul>
 <ul>
-<li><p>接着更改初始列表的长度，将长度改为20，阈值改为0.2，继续测试1000次，结果为<br><code>count_True:1000 count_False:0</code></p>
+<li><p>接着更改初始列表的长度，将长度改为20，阈值改为0.2，继续测试1000次，结果为<br><code>count_True:1000
+count_False:0</code></p>
 <p>结果可靠。</p>
 </li>
-<li><p>将阈值改为0.3，结果为<br><code>count_True:970 count_False:30</code><br>仍然可靠。</p>
+<li><p>将阈值改为0.3，结果为<br><code>count_True:970
+count_False:30</code><br>仍然可靠。</p>
 </li>
-<li><p>将阈值改为0.4，结果为<br><code>count_True:201 count_False:799</code></p>
+<li><p>将阈值改为0.4，结果为<br><code>count_True:201
+count_False:799</code></p>
 </li>
 </ul>
 <p>虽然结果同样是不可靠，但是与列表长度为10时的实验结果出现了不同，这次错误概率达到了80%，而列表长度为10时错误概率只有55%。</p>
@@ -186,8 +191,6 @@
 </ul>
 <p>下面是测试代码：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">import</span> decimal</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">CreList</span>():</span></span><br><span class="line">    ListA = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>]</span><br><span class="line">    <span class="comment"># ListA = [0,0,1,1,0,0,1,1,0,1]</span></span><br><span class="line">    ListB = []</span><br><span class="line">    length = <span class="built_in">len</span>(ListA)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">50</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">            ListB.append(ListA[j])</span><br><span class="line">    <span class="keyword">return</span> ListA,ListB,length</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">RandomChange</span>(<span class="params">ListB,Threshold</span>):</span></span><br><span class="line">    old_length = <span class="built_in">len</span>(ListB)</span><br><span class="line">    ListC = ListB</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(old_length):</span><br><span class="line">        <span class="keyword">if</span> random.random() &lt; Threshold:</span><br><span class="line">            <span class="keyword">if</span> ListC[i] == <span class="number">0</span>:</span><br><span class="line">                ListC[i] = <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                ListC[i] = <span class="number">0</span></span><br><span class="line">    <span class="keyword">return</span> ListC</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span>(<span class="params">Threshold</span>):</span></span><br><span class="line">    ListA,ListB,length = CreList()</span><br><span class="line">    ListC = RandomChange(ListB,Threshold)</span><br><span class="line">    endList = []</span><br><span class="line">    count_0 = <span class="number">0</span></span><br><span class="line">    count_1 = <span class="number">0</span></span><br><span class="line">    new_length = <span class="built_in">len</span>(ListC) // length</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(new_length):</span><br><span class="line">            <span class="keyword">if</span> ListC[i + j*length] == <span class="number">0</span>:</span><br><span class="line">                count_0 += <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                count_1 += <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> count_0 &gt;= count_1:</span><br><span class="line">            endList.append(<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            endList.append(<span class="number">1</span>)</span><br><span class="line">        count_0 = <span class="number">0</span></span><br><span class="line">        count_1 = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(endList)):</span><br><span class="line">        <span class="keyword">if</span> endList[i] != ListA[i]:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">        <span class="keyword">elif</span> endList[i] == ListA[i] <span class="keyword">and</span> i == <span class="built_in">len</span>(endList)-<span class="number">1</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    count_True = <span class="number">0</span></span><br><span class="line">    count_False = <span class="number">0</span></span><br><span class="line">    Threshold = decimal.Decimal(<span class="string">&#x27;0.500&#x27;</span>)</span><br><span class="line">    <span class="keyword">while</span> count_True &lt; <span class="number">800</span>:</span><br><span class="line">        count_True = <span class="number">0</span></span><br><span class="line">        count_False = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1000</span>):</span><br><span class="line">            temp = main(Threshold)</span><br><span class="line">            <span class="keyword">if</span> temp == <span class="literal">True</span>:</span><br><span class="line">                count_True += <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                count_False += <span class="number">1</span></span><br><span class="line">        Threshold = Threshold - decimal.Decimal(<span class="string">&#x27;0.001&#x27;</span>)</span><br><span class="line">    print(<span class="string">&quot;The Best Threshold:&quot;</span>+<span class="built_in">str</span>(Threshold))</span><br><span class="line">        <span class="comment"># print(&quot;count_True:&quot;+str(count_True))</span></span><br><span class="line">        <span class="comment"># print(&quot;count_False:&quot;+str(count_False))</span></span><br></pre></td></tr></table></figure>
-
-
 
         </div>
 
@@ -479,6 +482,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

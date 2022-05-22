@@ -157,12 +157,8 @@
         
 
         <div class="article-content markdown-body">
-            <p>在平时搜索问题时，总是会被csdn给恶心到，基本没什么干货，大多都是从别的网站复制粘贴的内容，并且还使用虚假标题骗取点击率，于是写了一个脚本去掉csdn.</p>
-<a id="more"></a>
-<p>使用的是油猴作为载体，操作起来很简单，直接在百度的页面打开油猴选择添加新脚本即可，这样会进入编写代码的界面，其实就是填充一个立即执行的函数。刚开始我想获取到搜索输入框的内容，然后在输入时只要不为空就立即添加<code> -csdn</code>，但是真正测试时却发现几乎没有反应时间，脚本会立即添加上<code> -csdn</code>，于是换成监听按键事件的方式去添加<code> -csdn</code>，这里还要主要在匹配网站后面需要改成<code>https://www.baidu.com/*</code>，需要加上通配符，还有为了避免重复添加<code> -csdn</code>，还需要进行一个逻辑判断，其实逻辑很简单。</p>
-<p>下面是代码:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="meta">    &#x27;use strict&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">document</span>.onkeydown = <span class="function"><span class="keyword">function</span> (<span class="params">event</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (event.code === <span class="string">&#x27;Enter&#x27;</span>) &#123;</span><br><span class="line">            <span class="keyword">let</span> tmp = <span class="built_in">document</span>.getElementsByName(<span class="string">&#x27;wd&#x27;</span>)[<span class="number">0</span>].value</span><br><span class="line">            <span class="keyword">if</span> (tmp.substr(tmp.length - <span class="number">6</span>, tmp.length) !== <span class="string">&#x27; -csdn&#x27;</span>) &#123;</span><br><span class="line">                <span class="built_in">document</span>.getElementsByName(<span class="string">&#x27;wd&#x27;</span>)[<span class="number">0</span>].value += <span class="string">&#x27; -csdn&#x27;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)()</span><br></pre></td></tr></table></figure>
-<p>搜索结果瞬间清爽～</p>
+            <p>在平时搜索问题时，总是会被csdn给恶心到，基本没什么干货，大多都是从别的网站复制粘贴的内容，并且还使用虚假标题骗取点击率，于是写了一个脚本去掉csdn.<br><a id="more"></a><br>使用的是油猴作为载体，操作起来很简单，直接在百度的页面打开油猴选择添加新脚本即可，这样会进入编写代码的界面，其实就是填充一个立即执行的函数。刚开始我想获取到搜索输入框的内容，然后在输入时只要不为空就立即添加<code>-csdn</code>，但是真正测试时却发现几乎没有反应时间，脚本会立即添加上<code>-csdn</code>，于是换成监听按键事件的方式去添加<code>-csdn</code>，这里还要主要在匹配网站后面需要改成<code>https://www.baidu.com/*</code>，需要加上通配符，还有为了避免重复添加<code>-csdn</code>，还需要进行一个逻辑判断，其实逻辑很简单。</p>
+<p>下面是代码:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="meta">    &#x27;use strict&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">document</span>.onkeydown = <span class="function"><span class="keyword">function</span> (<span class="params">event</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (event.code === <span class="string">&#x27;Enter&#x27;</span>) &#123;</span><br><span class="line">            <span class="keyword">let</span> tmp = <span class="built_in">document</span>.getElementsByName(<span class="string">&#x27;wd&#x27;</span>)[<span class="number">0</span>].value</span><br><span class="line">            <span class="keyword">if</span> (tmp.substr(tmp.length - <span class="number">6</span>, tmp.length) !== <span class="string">&#x27; -csdn&#x27;</span>) &#123;</span><br><span class="line">                <span class="built_in">document</span>.getElementsByName(<span class="string">&#x27;wd&#x27;</span>)[<span class="number">0</span>].value += <span class="string">&#x27; -csdn&#x27;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)()</span><br></pre></td></tr></table></figure><br>搜索结果瞬间清爽～</p>
 <p>好久没更新了，已经正式开始读研了，荒废了这么久…</p>
 
         </div>
@@ -455,6 +451,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

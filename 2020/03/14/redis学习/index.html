@@ -157,8 +157,7 @@
         
 
         <div class="article-content markdown-body">
-            <p>之前在项目中使用了redis,但是只是简单使用了redis以避免后台数据库中表字段的冗余,现在重新学习一下redis.</p>
-<a id="more"></a>
+            <p>之前在项目中使用了redis,但是只是简单使用了redis以避免后台数据库中表字段的冗余,现在重新学习一下redis.<br><a id="more"></a></p>
 <h1 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h1><p>redis一共有五大数据类型,分别是:</p>
 <ul>
 <li>字符串(String): 简单来说就是键值对,即映射,一个键对应一个值,命令为<code>SET name kale</code>,<code>GET name</code>.项目中用过这个数据类型,在设计新的消息功能的时候,在redis中为用户设置自增值,自增值代表新的消息数量.</li>
@@ -477,6 +476,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

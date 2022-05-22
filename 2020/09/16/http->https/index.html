@@ -157,13 +157,9 @@
         
 
         <div class="article-content markdown-body">
-            <p>之前一直想将http升级为https,拖着拖着也就一直没有去弄,刚好课设说明采用https会加分,虽然现在分数已经无所谓了,但还是升级了https.</p>
-<a id="more"></a>
-<p>之前有个<code>.cn</code>的域名,还以为到期了,一看是12月才到期,刚好之前还备案过了,正好拿来做域名.</p>
+            <p>之前一直想将http升级为https,拖着拖着也就一直没有去弄,刚好课设说明采用https会加分,虽然现在分数已经无所谓了,但还是升级了https.<br><a id="more"></a><br>之前有个<code>.cn</code>的域名,还以为到期了,一看是12月才到期,刚好之前还备案过了,正好拿来做域名.</p>
 <p>首先去腾讯云申请免费的ssl证书,然后去nginx中进行配置即可.</p>
-<p>在443端口:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">listen 443 ssl;</span><br><span class="line"></span><br><span class="line">ssl_certificate /1_www.kalew515.cn_bundle.crt;</span><br><span class="line">ssl_certificate_key /2_www.kalew515.cn.key;</span><br><span class="line">ssl_session_cache shared:SSL:1m;</span><br><span class="line">ssl_session_timeout 5m;</span><br><span class="line">server_name www.kalew515.cn;</span><br></pre></td></tr></table></figure>
-<p>在80端口,将请求重定向即可:</p>
+<p>在443端口:<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">listen 443 ssl;</span><br><span class="line"></span><br><span class="line">ssl_certificate /1_www.kalew515.cn_bundle.crt;</span><br><span class="line">ssl_certificate_key /2_www.kalew515.cn.key;</span><br><span class="line">ssl_session_cache shared:SSL:1m;</span><br><span class="line">ssl_session_timeout 5m;</span><br><span class="line">server_name www.kalew515.cn;</span><br></pre></td></tr></table></figure><br>在80端口,将请求重定向即可:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">        listen 80;</span><br><span class="line">        server_name www.kalew515.cn;</span><br><span class="line">        rewrite ^(.*)$ https://$&#123;server_name&#125;$1 permanent;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>其实也可以本地构造公私钥进行本地https,但是浏览器上依然会是红色的https标志标志不可信.</p>
 <p>另外,之前一直觉得接口请求部分是有一点问题的,现在改进过后终于没问题了.</p>
@@ -463,6 +459,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>

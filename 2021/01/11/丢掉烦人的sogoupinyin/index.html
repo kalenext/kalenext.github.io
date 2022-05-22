@@ -157,14 +157,12 @@
         
 
         <div class="article-content markdown-body">
-            <h1 id="关于sogoupinyin"><a href="#关于sogoupinyin" class="headerlink" title="关于sogoupinyin"></a>关于sogoupinyin</h1><p>之前在manjaro上一直用的都是<code>sogoupinyin</code>,但是官方早就停止了更新,<code>sogoupinyin</code>依赖<code>fcitx-qt4</code>,但是<code>fcitx-qt4</code>已经被官方移除,虽然一直可以用<code>fcitx-lilydjwg-git</code>这个包,但是兼容性一直还是存在问题.</p>
-<a id="more"></a>
-<p>今天试着换到<code>fcitx-googlepinyin</code>,体验瞬间升级, 另外发现可以将搜狗的ssf格式的皮肤直接转换为<code>fcitx</code>可以用的皮肤.</p>
+            <h1 id="关于sogoupinyin"><a href="#关于sogoupinyin" class="headerlink" title="关于sogoupinyin"></a>关于sogoupinyin</h1><p>之前在manjaro上一直用的都是<code>sogoupinyin</code>,但是官方早就停止了更新,<code>sogoupinyin</code>依赖<code>fcitx-qt4</code>,但是<code>fcitx-qt4</code>已经被官方移除,虽然一直可以用<code>fcitx-lilydjwg-git</code>这个包,但是兼容性一直还是存在问题.<br><a id="more"></a><br>今天试着换到<code>fcitx-googlepinyin</code>,体验瞬间升级, 另外发现可以将搜狗的ssf格式的皮肤直接转换为<code>fcitx</code>可以用的皮肤.</p>
 <ol>
 <li>首先克隆仓库</li>
 </ol>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/fkxxyz/ssfconv.git</span><br><span class="line"><span class="built_in">cd</span> ssfconv</span><br></pre></td></tr></table></figure>
-<ol start="2">
+<ol>
 <li>相关命令<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ssfconv  -t fcitx Mac黑键盘.ssf  Mac黑键盘</span><br></pre></td></tr></table></figure>
 这样就做好了<code>fcitx</code>能用的皮肤了.</li>
 </ol>
@@ -459,6 +457,21 @@
 
 
 
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
 <script type="text/javascript" src="/js/src/maodian.js"></script>
