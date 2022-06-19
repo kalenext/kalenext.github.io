@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="随笔">
+    <meta name="author" content="Kale">
+    
+    <title>
+        
+            将软件打包到AUR |
+        
+        Kale&#39;s Notes
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="shortcut icon" href="/images/favicon.png">
+    
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+
+    <script id="hexo-configurations">
+    let KEEP = window.KEEP || {};
+    KEEP.hexo_config = {"hostname":"kalew515.com","root":"/","language":"zh-CN","path":"search.xml"};
+    KEEP.theme_config = {"toc":{"enable":true,"number":false,"expand_all":true,"init_open":true},"style":{"primary_color":"#0066CC","avatar":"/images/kale_circle.png","favicon":"/images/favicon.png","article_img_align":"left","left_side_width":"260px","content_max_width":"920px","hover":{"shadow":false,"scale":true},"first_screen":{"enable":false,"background_img":"/images/bg.svg","description":"Just a blog ~"},"scroll":{"progress_bar":{"enable":true},"percent":{"enable":false}}},"local_search":{"enable":false,"preload":false},"code_copy":{"enable":true,"style":"default"},"pjax":{"enable":false},"lazyload":{"enable":false},"version":"3.4.3"};
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 月前","year":"%s 年前"};
+  </script>
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+        <span class="scroll-progress-bar"></span>
+    
+
+    
+</div>
+
+
+<main class="page-container">
+
+    
+
+    <div class="page-main-content">
+
+        <div class="page-main-content-top">
+            <header class="header-wrapper">
+
+    <div class="header-content">
+        <div class="left">
+            
+                <a class="logo-image" href="/">
+                    <img src="/images/kale_circle.png">
+                </a>
+            
+            <a class="logo-title" href="/">
+                Kale&#39;s Notes
+            </a>
+        </div>
+
+        <div class="right">
+            <div class="pc">
+                <ul class="menu-list">
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/"
+                            >
+                                首页
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/archives"
+                            >
+                                归档
+                            </a>
+                        </li>
+                    
+                    
+                </ul>
+            </div>
+            <div class="mobile">
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list">
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/">首页</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/archives">归档</a>
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle">
+
+            <div class="main-content">
+
+                
+                    <div class="fade-in-down-animation">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            <span class="title-hover-animation">将软件打包到AUR</span>
+        </div>
+
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/kale_circle.png">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Kale</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fas fa-edit"></i>&nbsp;2022-06-18 18:03:29
+    </span>
+    
+    
+
+    
+    
+    
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <p>尝试写了个翻译软件打包到AUR上，记录一下过程。</p>
+<h2 id="什么是AUR"><a href="#什么是AUR" class="headerlink" title="什么是AUR"></a>什么是AUR</h2><p>AUR的全称是Arch User Repository，用户主导，每个注册用户可以上传自己打包的软件，供别的用户下载，官方会定期从中挑选得票数比较高的软件包进入community仓库。进入community仓库即意味着以后可以通过pacman直接安装了。</p>
+<h3 id="注册aur帐号"><a href="#注册aur帐号" class="headerlink" title="注册aur帐号"></a>注册aur帐号</h3><p>要打包软件到AUR，首先需要一个AUR帐号。可以去AUR的网站去注册，填好用户名，邮箱，密码等信息即可，另外也要上传自己的ssh公钥。生成ssh密钥可以使用<code>ssh-keygen</code>命令，推荐直接用aur来命名，以方便区分多个密钥。生成好后也要在<code>.ssh</code>目录配置一下config：</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Host aur.archlinux.org</span><br><span class="line">  IdentityFile ~/.ssh/aur</span><br><span class="line">  <span class="keyword">User</span> <span class="title">aur</span></span><br></pre></td></tr></table></figure>
+<p>然后将公钥粘贴到注册界面中对应栏即可。</p>
+<h2 id="创建仓库"><a href="#创建仓库" class="headerlink" title="创建仓库"></a>创建仓库</h2><p>创建好aur帐号后，接下来就是创建自己对应的软件包仓库：</p>
+<p><code>git clone git+ssh://aur@aur.archlinux.org/[package_name]</code></p>
+<p>通过上面命令可以新建一个仓库。</p>
+<h2 id="制作软件包"><a href="#制作软件包" class="headerlink" title="制作软件包"></a>制作软件包</h2><p>打包软件包其实就是编写<code>PKGBUILD</code>文件，这个文件在<code>/usr/share/pacman/</code>目录下有模板<code>PKGBUILD.proto</code>，复制一份到新建的软件仓库中。然后修改对应行。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> Maintainer: Your Name &lt;youremail@domain.com&gt;</span></span><br><span class="line">pkgname=NAME             # 软件包名</span><br><span class="line">pkgver=VERSION           # 版本号，可以是1.0.0</span><br><span class="line">pkgrel=1                 # 发布号，当版本未更迭但是添加补丁等引起软件包变化时，将该参数+1</span><br><span class="line">epoch=                   # 正常情况下不使用该参数</span><br><span class="line">pkgdesc=&quot;&quot;               # 软件包描述</span><br><span class="line">arch=()                  # 描述软件包能够生成并使用的架构，比如x86_64</span><br><span class="line">url=&quot;&quot;                   # 该软件的上游地址，比如github等</span><br><span class="line">license=(&#x27;GPL&#x27;)          # 软件包发布许可</span><br><span class="line">groups=()                # 软件包所在的包组，孤立则不填</span><br><span class="line">depends=()               # 软件包的依赖，例如depends=(&#x27;foobar&gt;=1.8.0&#x27; &#x27;foobar&lt;2.0.0&#x27;)</span><br><span class="line">makedepends=()           # 仅在软件生成时需要的依赖</span><br><span class="line">checkdepends=()          # 仅在测试时需要的依赖</span><br><span class="line">optdepends=()            # 可选的依赖，不影响主要功能，但能提供额外的特性</span><br><span class="line">provides=()              # 说明当前包能提供的功能</span><br><span class="line">conflicts=()             # 与当前包冲突的包列表</span><br><span class="line">replaces=()              # 安装当前包会取代什么过时的包</span><br><span class="line">backup=()                # 当包被升级或者卸载时，应当备份的文件路径</span><br><span class="line">options=()               # 这个序列允许重载makepkg的部分定义在/etc/makepkg.conf中的默认行为</span><br><span class="line">install=                 # .install脚本的名称，可以在特定时刻完成特定操作，比如post_install等</span><br><span class="line">changelog=               # 更新日志的文件名</span><br><span class="line">source=(&quot;$pkgname-$pkgver.tar.gz&quot;</span><br><span class="line">        &quot;$pkgname-$pkgver.patch&quot;)  # 软件包路径</span><br><span class="line">noextract=()                       # 一个在source中列出，但不应该在运行makepkg时被解包的文件列表</span><br><span class="line">md5sums=()                         # 软件包的md5</span><br><span class="line">validpgpkeys=()</span><br><span class="line"></span><br><span class="line">prepare() &#123;                        # 此函数会执行用于预处理源文件以进行构建的命令</span><br><span class="line">        cd &quot;$pkgname-$pkgver&quot;</span><br><span class="line">        patch -p1 -i &quot;$srcdir/$pkgname-$pkgver.patch&quot;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">build() &#123;                          # 这个函数使用通用的命令来自动编译软件并创建软件的安装目录</span><br><span class="line">        cd &quot;$pkgname-$pkgver&quot;</span><br><span class="line">        ./configure --prefix=/usr</span><br><span class="line">        make</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">check() &#123;                          # 用来执行make check和其他一些例行测试的地方</span><br><span class="line">        cd &quot;$pkgname-$pkgver&quot;</span><br><span class="line">        make -k check</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">package() &#123;                        # 最后一步就是把编译好的文件放到pkg文件夹,一个简单的伪root环境</span><br><span class="line">        cd &quot;$pkgname-$pkgver&quot;</span><br><span class="line">        make DESTDIR=&quot;$pkgdir/&quot; install</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>按照上述要求填写好对应参数。</p>
+<p>在安装时，其实会通过<code>makepkg</code>先进行打包，将软件包打包成<code>.zst</code>包，然后再用<code>pacman -U .zst</code>进行安装，这里要注意，在<code>PKGBUILD</code>的编写中需要熟练使用<code>pkgdir</code>变量，<code>makepkg</code>会将该文件夹当成系统根目录，比如：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">package() &#123;</span><br><span class="line">     cd &quot;$pkgname-$pkgver&quot;</span><br><span class="line">     mkdir $&#123;pkgdir&#125;/opt/</span><br><span class="line">     cp -r build/$&#123;pkgname&#125;/opt/$&#123;pkgname&#125;/ $&#123;pkgdir&#125;/opt/</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>就是将build目录下的软件包移动到<code>$&#123;pkgdir&#125;/opt/</code>中，那么在真正安装时，pacman会将软件包安装到系统根目录的<code>/opt/</code>文件夹中，这样做的好处是避免了打包时需要root环境。这样在卸载时，才能卸载干净，要注意<code>package()</code>函数只是用来打包的，而不是用来安装的。</p>
+<h2 id="生成-SRCINFO"><a href="#生成-SRCINFO" class="headerlink" title="生成.SRCINFO"></a>生成.SRCINFO</h2><p>编写好<code>PKGBUILD</code>后，执行<code>updpkgsums</code>更新哈希值，然后通过<code>makepkg --printsrcinfo &gt; .SRCINFO</code>来生成<code>.SRCINFO</code>文件。</p>
+<p><code>.SRCINFO</code> 用一个简单直接的格式记录软件包的元数据。AUR的网站后台或AUR工具可以不用解析<code>PKGBUILD</code>就获得需要的信息。里面的内容相当于将PKGBUILD里的内容提取了一部分。所以可以看出来<code>PKGBUILD</code>文件是打包过程中最核心的文件。</p>
+<h2 id="上传软件包"><a href="#上传软件包" class="headerlink" title="上传软件包"></a>上传软件包</h2><p>有了<code>PKGBUILD</code>和<code>.SRCINFO</code>后，先在本地使用测试是否能够正常安装：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">makepkg</span><br><span class="line">pacman -U .zst</span><br></pre></td></tr></table></figure>
+<p>如果没有问题，就可以通过git上传到AUR了，注意上传时<code>PKGBUILD</code>和<code>.SRCINFO</code>文件是必传的，软件包则不需要上传。至此，就完成了打包软件包到AUR的过程。</p>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li>本文标题：将软件打包到AUR</li>
+        <li>本文作者：Kale</li>
+        <li>创建时间：2022-06-18 18:03:29</li>
+        <li>
+            本文链接：https://kalew515.com/2022/06/18/将软件打包到AUR/
+        </li>
+        <li>
+            版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <div class="article-nav">
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                           rel="next"
+                           href="/2022/05/17/%E4%BB%8Epaxos%E5%88%B0raft/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">从paxos到raft</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                              <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+        
+            <div class="comment-container">
+                <div class="comments-container">
+    <div id="comment-anchor"></div>
+    <div class="comment-area-title">
+        <i class="fas fa-comments">&nbsp;评论</i>
+    </div>
+    
+
+        
+            
+    <div class="valine-container">
+        <script 
+                src="//cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js"></script>
+        <div id="vcomments"></div>
+        <script >
+            function loadValine() {
+                new Valine({
+                    el: '#vcomments',
+                    appId: 'MUzcPwyvUoU6stt1PKOcCYKN-gzGzoHsz',
+                    appKey: 'PsMBJlPVAFRMlvn3oYDPS68r',
+                    meta: ['nick', 'mail', 'link'],
+                    avatar: 'wavatar',
+                    enableQQ: true,
+                    placeholder: 'QAQ',
+                    lang: 'zh-CN'.toLowerCase()
+                });
+
+                function getAuthor(language) {
+                    switch (language) {
+                        case 'en':
+                            return 'Author';
+                        case 'zh-CN':
+                            return '博主';
+                        default:
+                            return 'Master';
+                    }
+                }
+
+                // Add "Author" identify
+                const getValineDomTimer = setInterval(() => {
+                    const vcards = document.querySelectorAll('#vcomments .vcards .vcard');
+                    if (vcards.length > 0) {
+                        let author = 'Kale';
+
+                        if (author) {
+                            for (let vcard of vcards) {
+                                const vnick_dom = vcard.querySelector('.vhead .vnick');
+                                const vnick = vnick_dom.innerHTML;
+                                if (vnick === author) {
+                                    vnick_dom.innerHTML = `${vnick} <span class="author">${getAuthor(KEEP.hexo_config.language)}</span>`
+                                }
+                            }
+                        }
+                        clearInterval(getValineDomTimer);
+                    } else {
+                        clearInterval(getValineDomTimer);
+                    }
+                }, 2000);
+            }
+
+            if ('false') {
+                const loadValineTimeout = setTimeout(() => {
+                    loadValine();
+                    clearTimeout(loadValineTimeout);
+                }, 1000);
+            } else {
+                window.addEventListener('DOMContentLoaded', loadValine);
+            }
+        </script>
+    </div>
+
+
+
+        
+    
+</div>
+
+            </div>
+        
+    </div>
+</div>
+
+
+                
+            </div>
+
+        </div>
+
+        <div class="page-main-content-bottom">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info info-item">
+            &copy;
+            
+            2022&nbsp;<i class="fas fa-heart icon-animate"></i>&nbsp;<a href="/">Kale</a>
+        </div>
+        
+        <div class="theme-info info-item">
+            由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a>
+        </div>
+        
+        
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item page-aside-toggle">
+                <i class="fas fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+            <li class="go-comment">
+                <i class="fas fa-comment"></i>
+            </li>
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-bottom-side-tools">
+        <div class="side-tools-container">
+    <ul class="side-tools-list">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <li class="tools-item tool-expand-width flex-center">
+            <i class="fas fa-arrows-alt-h"></i>
+        </li>
+
+        <li class="tools-item tool-dark-light-toggle flex-center">
+            <i class="fas fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+            <li class="tools-item tool-scroll-to-top flex-center">
+                <i class="fas fa-arrow-up"></i>
+            </li>
+        
+
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list">
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+        
+    </ul>
+</div>
+
+    </div>
+
+    
+        <aside class="page-aside">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFAUR"><span class="nav-text">什么是AUR</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E5%86%8Caur%E5%B8%90%E5%8F%B7"><span class="nav-text">注册aur帐号</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E4%BB%93%E5%BA%93"><span class="nav-text">创建仓库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%B6%E4%BD%9C%E8%BD%AF%E4%BB%B6%E5%8C%85"><span class="nav-text">制作软件包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%9F%E6%88%90-SRCINFO"><span class="nav-text">生成.SRCINFO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%BC%A0%E8%BD%AF%E4%BB%B6%E5%8C%85"><span class="nav-text">上传软件包</span></a></li></ol>
+    </div>
+</div>
+        </aside>
+    
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+
+</main>
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/header-shrink.js"></script>
+
+<script src="/js/back2top.js"></script>
+
+<script src="/js/dark-light-toggle.js"></script>
+
+
+
+
+
+    
+<script src="/js/code-copy.js"></script>
+
+
+
+
+
+<div class="post-scripts">
+    
+        
+<script src="/js/left-side-toggle.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/toc.js"></script>
+
+    
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/maodian.js"></script>
+</html>
