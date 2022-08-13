@@ -9,7 +9,7 @@
     
     <title>
         
-            使用python简化工作 |
+            深入了解系统剪贴板 |
         
         Kale&#39;s Notes
     </title>
@@ -124,7 +124,7 @@
     <div class="article-content-container">
 
         <div class="article-title">
-            <span class="title-hover-animation">使用python简化工作</span>
+            <span class="title-hover-animation">深入了解系统剪贴板</span>
         </div>
 
         
@@ -140,7 +140,7 @@
                     <div class="meta-info">
                         <div class="article-meta-info">
     <span class="article-date article-meta-item">
-        <i class="fas fa-edit"></i>&nbsp;2019-12-08 15:49:55
+        <i class="fas fa-edit"></i>&nbsp;2022-08-11 22:31:27
     </span>
     
     
@@ -157,11 +157,29 @@
         
 
         <div class="article-content markdown-body">
-            <p>算是比较有空吧今天，想起以前在部门工作的时候，工作很繁杂，接触了python之后，发现很多事情其实可以变得很简单。<br><a id="more"></a><br>之前自己创建一个志愿者库的制度，志愿者答题，如果正确率足够高，则可以加入志愿者库。以前的方法很死板，就是将导出的xlsx文件，一个人一个人地对，这样效率太低也太浪费时间了。</p>
-<p>也是锻炼一下自己吧，以后应该都是用web比较多了，所以用一下qt练练手熟悉一下，本来想着写一个脚本实现自动录时长，但是听说现在都已经是直接导入文件就可以自动录时长了，很方便。</p>
-<p>主要是读取xlsx文件，然后根据判断每一项是否为正确答案即可，逻辑很简单啦。界面设计得也很简单，毕竟功能就很简单嘛。</p>
-<p>提一点是没有把正确答案写进代码里，还是创建了一个文件用以存储正确答案，也是方便他们以后更改吧。</p>
-<p>就这样啦，写这个blog其实就是想纪念一下，毕竟这个制度也是我提出的，总不能让他们因为一些无谓的工作浪费了太长时间了。</p>
+            <p>因为写的软件中涉及到Linux系统剪贴板的部分操作，所以顺便学习一下相关知识</p>
+<h2 id="图形平台"><a href="#图形平台" class="headerlink" title="图形平台"></a>图形平台</h2><p>首先需要了解，linux内核并不提供图形化界面，所以需要安装图形化界面软件来实现图形化，这点和windows是不一样的，windows中图形化界面的内容已经写到内核中。</p>
+<p>图形平台是一个程序，主要任务是协调客户端与操作系统，硬件以及彼此之间的输入输出，通过相关协议进行通信，例如X Window System和Wayland。</p>
+<h3 id="X-Window-System"><a href="#X-Window-System" class="headerlink" title="X Window System"></a>X Window System</h3><p>X Window System是一种以位图方式显示的软件窗口系统，目前年代已经很久远了，并且X只是工具包以及架构规范，本身并没有实际参与运作的实体，所以需要有可执行的实体，所以基于X的基础上，非常流行的实现版本是xorg，而xorg所用的协议版本是x11。</p>
+<p>X采用的是C/S架构模型，是由一个X服务器与多个X客户端程序进行通信，服务器接受对于图形输出窗口的请求并反馈用户输入。</p>
+<h4 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h4><ol>
+<li>内核捕获鼠标点击事件并发送给X server。</li>
+<li>X server会计算该把这一事件发送给哪个窗口（事实上，窗口位置是由Compositor控制的，X server并不能够正确的计算Compositor做过特效变化之后的按钮的正确位置）。</li>
+<li>应用程序对此事件进行处理（将引发按钮更新动作）。但是，在此之前它得向X server发送绘制请求。</li>
+<li>X server接收到这条绘制请求，然后把它发给视频驱动来渲染。X还计算了更新区域，并且这条“垃圾信息”发送给了Compositor。</li>
+<li>这时，Compositor知道它必须要重新合成屏幕上的一块区域。当然，这还是要向X server发送绘制请求的。</li>
+<li>开始绘制。但是X server还会去做一些不必要的本职工作（窗口重叠计算、窗口剪裁计算等）。</li>
+</ol>
+<h3 id="Wayland"><a href="#Wayland" class="headerlink" title="Wayland"></a>Wayland</h3><p>与X Window不同，它规定由客户机自身负责窗口边框和装饰的绘制，窗口管理器简化成显示管理服务。由于X Window发展这么多年以来已经非常臃肿，并且内容已经慢慢被取代，开发者为了适用X就要开发很多额外的扩展，为了解决这个问题，Wayland出现了。</p>
+<h4 id="流程-1"><a href="#流程-1" class="headerlink" title="流程"></a>流程</h4><ol>
+<li>内核捕获鼠标点击事件并发送给Wayland Compositor。</li>
+<li>由于是直接发给Wayland Compositor的，所以Wayland Compositor会正确地计算出按钮的位置。同时它会把这一事件发送给按钮所在的应用程序来处理。</li>
+<li>应用程序直接渲染，无需向Wayland Compositor请求。只需在绘制完成之后向Wayland Compositor发送一条信息表明这块区域被更新了。</li>
+<li>Wayland Compositor收到这条信息后，立即重新合成整个桌面。</li>
+</ol>
+<h2 id="剪贴板"><a href="#剪贴板" class="headerlink" title="剪贴板"></a>剪贴板</h2><p>下面主要介绍X中剪贴板的实现，与wayland的实现有较大不同，如在项目中实现即时划词翻译，只有在X平台上才可以实现，在Wayland中则无法通过此种方式实现。</p>
+<h3 id="Selections"><a href="#Selections" class="headerlink" title="Selections"></a>Selections</h3><p>当在一个窗口中选择了某个内容时，Selections中会更新此部分内容，可以通过监控Selections的方式，来实现即时划词翻译。需要注意这里需要client实现了此部分功能，如果client没有实现此部分功能，则selections不会同步更新，比如zotero就没有实现此功能。</p>
+<h3 id="Clipboard"><a href="#Clipboard" class="headerlink" title="Clipboard"></a>Clipboard</h3><p>这是X平台的正式的剪贴板，用户显式按下复制时，内容会保存到此缓冲区中。</p>
 
         </div>
 
@@ -169,11 +187,11 @@
             <div class="post-copyright-info">
                 <div class="article-copyright-info-container">
     <ul>
-        <li>本文标题：使用python简化工作</li>
+        <li>本文标题：深入了解系统剪贴板</li>
         <li>本文作者：Kale</li>
-        <li>创建时间：2019-12-08 15:49:55</li>
+        <li>创建时间：2022-08-11 22:31:27</li>
         <li>
-            本文链接：https://kalew515.com/2019/12/08/使用python简化工作/
+            本文链接：https://kalew515.com/2022/08/11/深入了解系统剪贴板/
         </li>
         <li>
             版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -187,29 +205,14 @@
         
             <div class="article-nav">
                 
-                    <div class="article-prev">
-                        <a class="prev"
-                           rel="prev"
-                           href="/2019/12/13/%E5%AF%B9%E5%A4%9A%E6%95%B0%E8%A1%A8%E5%86%B3%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A2%E7%A9%B6/"
-                        >
-                            <span class="left arrow-icon flex-center">
-                              <i class="fas fa-chevron-left"></i>
-                            </span>
-                            <span class="title flex-center">
-                                <span class="post-nav-title-item">对多数表决算法的探究</span>
-                                <span class="post-nav-item">上一篇</span>
-                            </span>
-                        </a>
-                    </div>
-                
                 
                     <div class="article-next">
                         <a class="next"
                            rel="next"
-                           href="/2019/10/02/request%E5%92%8Cselenium%E6%A8%A1%E6%8B%9F%E7%99%BB%E9%99%86/"
+                           href="/2022/06/18/%E5%B0%86%E8%BD%AF%E4%BB%B6%E6%89%93%E5%8C%85%E5%88%B0AUR/"
                         >
                             <span class="title flex-center">
-                                <span class="post-nav-title-item">request和selenium模拟登录</span>
+                                <span class="post-nav-title-item">将软件打包到AUR</span>
                                 <span class="post-nav-item">下一篇</span>
                             </span>
                             <span class="right arrow-icon flex-center">
@@ -400,7 +403,7 @@
         <aside class="page-aside">
             <div class="post-toc-wrap">
     <div class="post-toc">
-        
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%BE%E5%BD%A2%E5%B9%B3%E5%8F%B0"><span class="nav-text">图形平台</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#X-Window-System"><span class="nav-text">X Window System</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E7%A8%8B"><span class="nav-text">流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Wayland"><span class="nav-text">Wayland</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E7%A8%8B-1"><span class="nav-text">流程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%AA%E8%B4%B4%E6%9D%BF"><span class="nav-text">剪贴板</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Selections"><span class="nav-text">Selections</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Clipboard"><span class="nav-text">Clipboard</span></a></li></ol></li></ol>
     </div>
 </div>
         </aside>
