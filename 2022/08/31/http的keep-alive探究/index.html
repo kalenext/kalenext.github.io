@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="随笔">
+    <meta name="author" content="Kale">
+    
+    <title>
+        
+            http的keep-alive探究 |
+        
+        Kale&#39;s Notes
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="shortcut icon" href="/images/favicon.png">
+    
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+
+    <script id="hexo-configurations">
+    let KEEP = window.KEEP || {};
+    KEEP.hexo_config = {"hostname":"kalew515.com","root":"/","language":"zh-CN","path":"search.xml"};
+    KEEP.theme_config = {"toc":{"enable":true,"number":false,"expand_all":true,"init_open":true},"style":{"primary_color":"#0066CC","avatar":"/images/kale_circle.png","favicon":"/images/favicon.png","article_img_align":"left","left_side_width":"260px","content_max_width":"920px","hover":{"shadow":false,"scale":true},"first_screen":{"enable":false,"background_img":"/images/bg.svg","description":"Just a blog ~"},"scroll":{"progress_bar":{"enable":true},"percent":{"enable":false}}},"local_search":{"enable":false,"preload":false},"code_copy":{"enable":true,"style":"default"},"pjax":{"enable":false},"lazyload":{"enable":false},"version":"3.4.3"};
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 月前","year":"%s 年前"};
+  </script>
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+        <span class="scroll-progress-bar"></span>
+    
+
+    
+</div>
+
+
+<main class="page-container">
+
+    
+
+    <div class="page-main-content">
+
+        <div class="page-main-content-top">
+            <header class="header-wrapper">
+
+    <div class="header-content">
+        <div class="left">
+            
+                <a class="logo-image" href="/">
+                    <img src="/images/kale_circle.png">
+                </a>
+            
+            <a class="logo-title" href="/">
+                Kale&#39;s Notes
+            </a>
+        </div>
+
+        <div class="right">
+            <div class="pc">
+                <ul class="menu-list">
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/"
+                            >
+                                首页
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/archives"
+                            >
+                                归档
+                            </a>
+                        </li>
+                    
+                    
+                </ul>
+            </div>
+            <div class="mobile">
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list">
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/">首页</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/archives">归档</a>
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle">
+
+            <div class="main-content">
+
+                
+                    <div class="fade-in-down-animation">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            <span class="title-hover-animation">http的keep-alive探究</span>
+        </div>
+
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/kale_circle.png">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Kale</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fas fa-edit"></i>&nbsp;2022-08-31 10:59:39
+    </span>
+    
+    
+
+    
+    
+    
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <p>了解了一下Http协议中的<code>keep-alive</code>机制以及Http版本更迭，记录一下</p>
+<a id="more"></a>
+<h2 id="HTTP的Keep-Alive"><a href="#HTTP的Keep-Alive" class="headerlink" title="HTTP的Keep-Alive"></a>HTTP的Keep-Alive</h2><p>在Http的headers中，有<code>connection</code>字段，可以设置为<code>close</code>或者<code>keep-alive</code>，自Http 1.1开始，这个字段的默认值改为了<code>keep-alive</code>，而在http 1.0中，这个字段的默认值则是<code>close</code>。</p>
+<p>如果将该值设置为<code>close</code>，那么在这次请求完成后，将会断开网络连接，而如果设置为<code>keep-alive</code>，将不会断开连接，这样后面的请求仍然可以使用当前的网络连接。</p>
+<p>这里的网络连接就是指TCP连接，因为http 1.1底层推荐使用的就是tcp连接，如果每个请求都需要重新建立tcp连接，经历三次握手四次挥手环节，并且由于tcp慢启动（慢启动是指每次TCP接收窗口收到确认时都会增长，增加的大小就是已确认段的数目。这种情况一直保持到要么没有收到一些段，要么窗口大小到达预先定义的阈值）的特性，将严重影响传输效率。</p>
+<h2 id="TCP的keepalive"><a href="#TCP的keepalive" class="headerlink" title="TCP的keepalive"></a>TCP的keepalive</h2><p>其实tcp也存在保活机制，但是区别于http的<code>keep-alive</code>，http的<code>keep-alive</code>只会影响tcp连接的建立与断开的选择，而不会影响到tcp连接的原有保活机制。</p>
+<p>tcp连接建立之后，可能会面临很多情况，比如某一方关机，断电等，没有来得及释放连接，但是另一方却不知情，如果没有保活机制，将一直维持着这个连接，造成资源的浪费。</p>
+<p>有了保活机制之后，一方可以向另一方发送心跳包，这里有三个参数(单位/s)：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tcp_keepalive_time     <span class="regexp">//</span> 心跳周期</span><br><span class="line">tcp_keepalive_intvl    <span class="regexp">//</span> 侦测包发送间隔</span><br><span class="line">tcp_keepalive_probes   <span class="regexp">//</span> 侦测包重试次数</span><br></pre></td></tr></table></figure>
+<p>即，在等待<code>tcp_keepalive_time</code>时间里没有数据交互，服务器会发送侦测包，如果收到答复，则重置时间，如果未收到答复，则等待<code>tcp_keepalive_intcl</code>的时间后再次发送，一共发送<code>tcp_keepalive_probes</code>次侦测包，如果都没有收到回复，则关闭该连接。</p>
+<p>在linux中，可以查看当前系统的相关参数：</p>
+<img src="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/2022-08-31_15-48.png" class="">
+<h2 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h2><h3 id="keep-alive"><a href="#keep-alive" class="headerlink" title="keep-alive"></a>keep-alive</h3><p>首先用go搭一个简单的服务器</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;net/http&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Test</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;receive a request from: &quot;</span>, r.RemoteAddr, r.Header)</span><br><span class="line">	<span class="comment">//w.Header().Set(&quot;Connection&quot;, &quot;keep-alive&quot;)</span></span><br><span class="line">	w.Write([]<span class="keyword">byte</span>(<span class="string">&quot;ok&quot;</span>))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	http.HandleFunc(<span class="string">&quot;/test&quot;</span>, Test)</span><br><span class="line">	http.ListenAndServe(<span class="string">&quot;:8080&quot;</span>, <span class="literal">nil</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用python脚本去发起请求：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">req</span>():</span></span><br><span class="line">    url = <span class="string">&quot;http://127.0.0.1:8080/test&quot;</span></span><br><span class="line">    session = requests.session()</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">        res = session.get(url=url)</span><br><span class="line">        print(res.headers)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    req()</span><br></pre></td></tr></table></figure>
+<p>可以看到这里没有设置请求头的connection字段。从结果中可以看到连接并未断开：</p>
+<img src="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/2022-08-31_15-59.png" class="">
+<p>从wireshark抓包结果中也可以看到除了第一次进行了握手操作，后续都没有再进行握手了：</p>
+<img src="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/2022-08-31_16-02.png" class="">
+<h3 id="close"><a href="#close" class="headerlink" title="close"></a>close</h3><p>接下来验证关闭连接</p>
+<p>在python脚本中添加上请求头connection为close。</p>
+<img src="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/2022-08-31_16-05.png" class="">
+<img src="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/2022-08-31_16-07.png" class="">
+<p>可以看到五次请求，经过了五次tcp的连接和断开连接过程。</p>
+<h3 id="go中http服务器的关闭连接逻辑"><a href="#go中http服务器的关闭连接逻辑" class="headerlink" title="go中http服务器的关闭连接逻辑"></a>go中http服务器的关闭连接逻辑</h3><p>由于是用go的net/http包搭建的服务器，所以追踪一下源码看一下对于该字段的处理流程。</p>
+<p>当服务端启动后，会调用socket的<code>Accept()</code>方法等待连接，当有连接建立后，就会新开一个协程，处理这个连接，<code>serve</code>方法就是协程会调用的方法（这里隐去了一些细节）。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *conn)</span> <span class="title">serve</span><span class="params">(ctx context.Context)</span></span> &#123;</span><br><span class="line">	c.remoteAddr = c.rwc.RemoteAddr().String()</span><br><span class="line">	ctx = context.WithValue(ctx, LocalAddrContextKey, c.rwc.LocalAddr())</span><br><span class="line"></span><br><span class="line">	<span class="comment">// HTTP/1.x from here on.</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		w, err := c.readRequest(ctx)</span><br><span class="line">		<span class="keyword">if</span> c.r.remain != c.server.initialReadLimitSize() &#123;</span><br><span class="line">			<span class="comment">// If we read any bytes off the wire, we&#x27;re active.</span></span><br><span class="line">			c.setState(c.rwc, StateActive, runHooks)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		c.curReq.Store(w)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> requestBodyRemains(req.Body) &#123;</span><br><span class="line">			registerOnHitEOF(req.Body, w.conn.r.startBackgroundRead)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			w.conn.r.startBackgroundRead()</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// HTTP cannot have multiple simultaneous active requests.[*]</span></span><br><span class="line">		<span class="comment">// Until the server replies to this request, it can&#x27;t read another,</span></span><br><span class="line">		<span class="comment">// so we might as well run the handler in this goroutine.</span></span><br><span class="line">		<span class="comment">// [*] Not strictly true: HTTP pipelining. We could let them all process</span></span><br><span class="line">		<span class="comment">// in parallel even if their responses need to be serialized.</span></span><br><span class="line">		<span class="comment">// But we&#x27;re not going to implement HTTP pipelining because it</span></span><br><span class="line">		<span class="comment">// was never deployed in the wild and the answer is HTTP/2.</span></span><br><span class="line">		inFlightResponse = w</span><br><span class="line">		serverHandler&#123;c.server&#125;.ServeHTTP(w, w.req)</span><br><span class="line">		inFlightResponse = <span class="literal">nil</span></span><br><span class="line">		w.cancelCtx()</span><br><span class="line">		<span class="keyword">if</span> c.hijacked() &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		w.finishRequest()</span><br><span class="line">		<span class="keyword">if</span> !w.shouldReuseConnection() &#123;</span><br><span class="line">			<span class="keyword">if</span> w.requestBodyLimitHit || w.closedRequestBodyEarly() &#123;</span><br><span class="line">				c.closeWriteAndWait()</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		c.setState(c.rwc, StateIdle, runHooks)</span><br><span class="line">		c.curReq.Store((*response)(<span class="literal">nil</span>))</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> !w.conn.server.doKeepAlives() &#123;</span><br><span class="line">			<span class="comment">// We&#x27;re in shutdown mode. We might&#x27;ve replied</span></span><br><span class="line">			<span class="comment">// to the user without &quot;Connection: close&quot; and</span></span><br><span class="line">			<span class="comment">// they might think they can send another</span></span><br><span class="line">			<span class="comment">// request, but such is life with HTTP/1.1.</span></span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> d := c.server.idleTimeout(); d != <span class="number">0</span> &#123;</span><br><span class="line">			c.rwc.SetReadDeadline(time.Now().Add(d))</span><br><span class="line">			<span class="keyword">if</span> _, err := c.bufr.Peek(<span class="number">4</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		c.rwc.SetReadDeadline(time.Time&#123;&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第七行，可以看到这里有一个死循环，不断调用<code>servers</code>包下的<code>readRequest()</code>方法来读请求。进入该方法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *conn)</span> <span class="title">readRequest</span><span class="params">(ctx context.Context)</span> <span class="params">(w *response, err error)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">	req, err := readRequest(c.bufr)</span><br><span class="line">    ...</span><br><span class="line">	<span class="keyword">return</span> w, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第三行可以看到再次调用了<code>request</code>包下的<code>readRequest()</code>方法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">req.Close = shouldClose(req.ProtoMajor, req.ProtoMinor, req.Header, <span class="literal">false</span>)</span><br></pre></td></tr></table></figure>
+<p>方法内部第七行语句设置了req的Close属性，传入的参数分别是http的大版本和小版本，req的Header以及一个bool类型的<code>removeCloseHeader</code>，这里恒为false。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">shouldClose</span><span class="params">(major, minor <span class="keyword">int</span>, header Header, removeCloseHeader <span class="keyword">bool</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> major &lt; <span class="number">1</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	conv := header[<span class="string">&quot;Connection&quot;</span>]</span><br><span class="line">	hasClose := httpguts.HeaderValuesContainsToken(conv, <span class="string">&quot;close&quot;</span>)</span><br><span class="line">	<span class="keyword">if</span> major == <span class="number">1</span> &amp;&amp; minor == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> hasClose || !httpguts.HeaderValuesContainsToken(conv, <span class="string">&quot;keep-alive&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> hasClose &amp;&amp; removeCloseHeader &#123;</span><br><span class="line">		header.Del(<span class="string">&quot;Connection&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> hasClose</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到在该方法中，取到请求头中的<code>Connection</code>字段，并且针对http1.0和1.1的不同进行赋值（1.0版本只有设置了keep-alive才是长连接，1.1版本只要没有设置<code>close</code>，就默认为<code>keep-alive</code>）。</p>
+<p>然后再根据req对w进行赋值</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">w = &amp;response&#123;</span><br><span class="line">	conn:          c,</span><br><span class="line">	cancelCtx:     cancelCtx,</span><br><span class="line">	req:           req,</span><br><span class="line">	reqBody:       req.Body,</span><br><span class="line">	handlerHeader: <span class="built_in">make</span>(Header),</span><br><span class="line">	contentLength: <span class="number">-1</span>,</span><br><span class="line">	closeNotifyCh: <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>, <span class="number">1</span>),</span><br><span class="line"></span><br><span class="line">	<span class="comment">// We populate these ahead of time so we&#x27;re not</span></span><br><span class="line">	<span class="comment">// reading from req.Header after their Handler starts</span></span><br><span class="line">	<span class="comment">// and maybe mutates it (Issue 14940)</span></span><br><span class="line">	wants10KeepAlive: req.wantsHttp10KeepAlive(),</span><br><span class="line">	wantsClose:       req.wantsClose(), <span class="comment">// 只要req.Close为true则返回true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>回到<code>serve()</code>方法，可以看到在本次请求执行结束后有如下语句，：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> !w.shouldReuseConnection() &#123;</span><br><span class="line">	<span class="keyword">if</span> w.requestBodyLimitHit || w.closedRequestBodyEarly() &#123;</span><br><span class="line">		c.closeWriteAndWait()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里会进入到该条件分支，可以看到这里会进行return退出协程，而在上面定义了defer函数，在退出之前会进行执行，也就是断开tcp连接。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> err := <span class="built_in">recover</span>(); err != <span class="literal">nil</span> &amp;&amp; err != ErrAbortHandler &#123;</span><br><span class="line">		<span class="keyword">const</span> size = <span class="number">64</span> &lt;&lt; <span class="number">10</span></span><br><span class="line">		buf := <span class="built_in">make</span>([]<span class="keyword">byte</span>, size)</span><br><span class="line">		buf = buf[:runtime.Stack(buf, <span class="literal">false</span>)]</span><br><span class="line">		c.server.logf(<span class="string">&quot;http: panic serving %v: %v\n%s&quot;</span>, c.remoteAddr, err, buf)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> inFlightResponse != <span class="literal">nil</span> &#123;</span><br><span class="line">		inFlightResponse.cancelCtx()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> !c.hijacked() &#123;</span><br><span class="line">		<span class="keyword">if</span> inFlightResponse != <span class="literal">nil</span> &#123;</span><br><span class="line">			inFlightResponse.conn.r.abortPendingRead()</span><br><span class="line">			inFlightResponse.reqBody.Close()</span><br><span class="line">		&#125;</span><br><span class="line">		c.<span class="built_in">close</span>() <span class="comment">// 关闭该连接</span></span><br><span class="line">		c.setState(c.rwc, StateClosed, runHooks) <span class="comment">// 设置状态</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;()</span><br></pre></td></tr></table></figure>
+<p>如果不进入return的分支，则会设置连接状态为StateIdle，表示可用，然后清空当前req，再次执行循环，通过<code>w, err := c.readRequest(ctx)</code>语句读请求。</p>
+<p>这里要注意这里不是阻塞的，当网络数据还没有达到时，如果socket被设置为了阻塞模式，进行读取数据将导致当前协程被阻塞。go中当建立tcp连接时，已经将socket设置为了非阻塞模式。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sysSocket</span><span class="params">(family, sotype, proto <span class="keyword">int</span>)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">	s, err := socketFunc(family, sotype|syscall.SOCK_NONBLOCK|syscall.SOCK_CLOEXEC, proto)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>, os.NewSyscallError(<span class="string">&quot;socket&quot;</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> s, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><p>另外，在java中，一个连接最多处理100个请求</p>
+<img src="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/2022-08-31_18-00.png" class="">
+<p>从图中可以看到在第101次请求到来时连接重新建立了，当然这个值也是可以设置的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * The maximum number of requests which can be performed over a</span></span><br><span class="line"><span class="comment"> * keep-alive connection. The default is the same as for Apache HTTP</span></span><br><span class="line"><span class="comment"> * Server (100).</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getMaxKeepAliveRequests</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> getEndpoint().getMaxKeepAliveRequests();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在go中则没有这个限制。</p>
+<h2 id="Http-2-0"><a href="#Http-2-0" class="headerlink" title="Http 2.0"></a>Http 2.0</h2><h3 id="Http-1-1-的问题"><a href="#Http-1-1-的问题" class="headerlink" title="Http 1.1 的问题"></a>Http 1.1 的问题</h3><p>Http 1.1版本存在一些问题，虽然通过<code>keep-alive</code>机制大幅提升了传输性能，但是一个很大的问题就是请求是顺序发送的，这样就可能存在<code>head of line blocking</code>问题，第一个请求如果被阻塞，后续的请求都将无法发送。另外，<code>keep-alive</code>对移动端app也用处不大，因为移动端的app的请求比较分散，时间跨度较大。这里也提出了一些方案，比如pipelining，请求不用等上一个请求返回之后再发送，但也存在一些问题，比如一些请求间可能有依赖关系，另外<code>head of line blocking</code>并没有完全解决。而且统一比较困难，所以大多数浏览器要么没有实现这个功能，要么默认禁止了这个功能。并且Http 1.1的头部是重复且巨大的，特别是带上了cookie的头部，每次请求都要重复发送，并且也没有服务器推送消息的功能。</p>
+<h3 id="SPDY"><a href="#SPDY" class="headerlink" title="SPDY"></a>SPDY</h3><p>在Http 2.0之前，还存在一个SPDY协议，这是由google提出的，在2016年被废止。SPDY是在Http之下，在SSL之上，所以不会影响到Http协议，只是将Http包封装成一种新的frame格式。</p>
+<p>SPDY相较于Http 1.1的进步有：</p>
+<ul>
+<li>多路复用：通过多个请求stream共享一个tcp连接。（浏览器客户端在同一时间内，针对同一域名下的请求有一定数量限制，超过限制的请求会被阻塞，chrome是6个，这也就是为什么一些大型网站的cdn域名会有多个）</li>
+<li>请求优先级：SPDY允许为每个request设置优先级</li>
+<li>header压缩：对Http的header进行压缩，因为header中大部分内容都是重复的并且非常重量级</li>
+<li>server推送：开启server push之后，server通过<code>X-Associated-Content header</code>（X-开头的header都属于非标准的，自定义header）告知客户端会有新的内容推送过来。在用户第一次打开网站首页的时候，server将资源主动推送过来可以极大的提升用户体验。</li>
+</ul>
+<h3 id="Http-2-0-主要改动"><a href="#Http-2-0-主要改动" class="headerlink" title="Http 2.0 主要改动"></a>Http 2.0 主要改动</h3><p>客户端和服务端交流前需要协商使用什么版本的Http，如果单独加一个协商过程，则需要多一个RTT的延迟，SPDY的做法是在SSL层完成这个协商过程，google做了一个tls的扩展NPN（Next Protocol Negotiation），但最终http2.0没有使用NPN，而是ALPN（Application Layer Protocol Negotiation）。</p>
+<p>相较于Http 1.1, 2.0版本有如下改动：</p>
+<h4 id="新的二进制格式"><a href="#新的二进制格式" class="headerlink" title="新的二进制格式"></a>新的二进制格式</h4><p>和SPDY的思路一样，Http 2.0也会将Http包封装成帧，相较于字符串形式的Http 1.1，二进制类型的帧则非常高效</p>
+<h4 id="连接共享"><a href="#连接共享" class="headerlink" title="连接共享"></a>连接共享</h4><p>在Http 2.0的帧中，有stream id，所以这些帧可以并行发送，在server端再进行组合，并且也可以设置优先级。客户端的stream id是奇数，服务器则是偶数</p>
+<h4 id="header压缩"><a href="#header压缩" class="headerlink" title="header压缩"></a>header压缩</h4><p>Http 1.1可以使用头字段<code>Content-Encoding</code>指定body的压缩方式，比如用gzip压缩，这样可以节约带宽，但报文中的另外一部分header，没有针对它的优化手段。</p>
+<p>Http 2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小。高效的压缩算法可以很大的压缩header，减少发送包的数量从而降低延迟。压缩算法是HPACK算法。</p>
+<p>编码表是动态生成的，比如，第一次发送时头部中的<code>user-agent</code>字段数据有上百个字节，经过<code>Huffman</code>编码发送出去后，客户端和服务器双方都会更新自己的动态表，添加一个新的Index号62。那么在下一次发送的时候，就不用重复发这个字段的数据了，只用发1个字节的Index号就好了，因为双方都可以根据自己的动态表获取到字段的数据。</p>
+<p>所以，使得动态表生效有一个前提：<strong>必须同一个连接上，重复传输完全相同的 HTTP 头部</strong>。如果消息字段在1个连接上只发送了1次，或者重复传输时，字段总是略有变化，动态表就无法被充分利用了。但是，动态表越大，占用的内存也就越大，如果占用了太多内存，是会影响服务器性能的，因此 Web 服务器都会提供类似 <code>http2_max_requests</code> 的配置，用于限制一个连接上能够传输的请求数量，避免动态表无限增大，请求数量到达上限后，就会关闭 Http 2.0连接来释放内存。</p>
+<h4 id="更安全的SSL"><a href="#更安全的SSL" class="headerlink" title="更安全的SSL"></a>更安全的SSL</h4><p>Http 2.0使用了tls的拓展<code>ALPN</code>来做协议升级，除此之外加密这块还有一个改动，Http 2.0对tls的安全性做了近一步加强，通过黑名单机制禁用了几百种不再安全的加密算法，一些加密算法可能还在被继续使用。如果在ssl协商过程当中，客户端和server的cipher suite没有交集，直接就会导致协商失败，从而请求失败。在server端部署Http 2.0的时候要特别注意这一点。</p>
+<h2 id="Http-3-0"><a href="#Http-3-0" class="headerlink" title="Http 3.0"></a>Http 3.0</h2><h3 id="Http-2-0-的问题"><a href="#Http-2-0-的问题" class="headerlink" title="Http 2.0 的问题"></a>Http 2.0 的问题</h3><p>Http 2.0 是基于TCP协议来传输数据的，TCP是字节流协议，必须保证收到的字节数据是完整且连续的，这样内核才会将缓冲区里的数据返回给Http应用，那么当前1个字节数据没有到达时，后收到的字节数据只能存放在内核缓冲区里，只有等到这1个字节数据到达时，Http 2.0应用层才能从内核中拿到数据，这就是 Http 2.0队头阻塞问题。</p>
+<h3 id="Http-3-0-简介"><a href="#Http-3-0-简介" class="headerlink" title="Http 3.0 简介"></a>Http 3.0 简介</h3><p>由于Http 2.0的队头阻塞问题是tcp协议带来的，所以Http 3.0抛弃了tcp协议，而是使用了udp协议。</p>
+<p>Http3.0的前身是<code>QUIC（Quick Udp Internet Connections）</code>协议，也是google提出的。Quic协议处于Http和SSL层之间，所以Http3.0也叫Http Over Quic。传统的基于TCP的Http在正式传输之前需要进行TCP握手环节以及TLS协商环节，需要至少3-4个RTT时间才能正式传输数据，QUIC可以实现O RTT建链。</p>
+<p>首次连接时，进行一次TLS协商，非首次连接如果之前的TLS协商还有效，就可以复用之前的协商结果</p>
+<h3 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h3><h4 id="前向安全"><a href="#前向安全" class="headerlink" title="前向安全"></a>前向安全</h4><p>通俗来说，前向安全指的是密钥泄漏也不会让之前加密的数据被泄漏，影响的只有当前，对之前的数据无影响。QUIC协议首次连接时先后生成了两个加密密钥，由于config被客户端存储了，如果期间服务端私钥泄漏，那么可以根据<code>K = mod p</code>计算出密钥K。</p>
+<p>如果一直使用这个密钥进行加解密，那么就可以用K解密所有历史消息，因此后续又生成了新密钥，使用其进行加解密，当时完成交互时则销毁，从而实现了前向安全。</p>
+<h4 id="前向纠错"><a href="#前向纠错" class="headerlink" title="前向纠错"></a>前向纠错</h4><p>QUIC每发送一组数据就对这组数据进行异或运算，并将结果作为一个FEC包发送出去，接收方收到这一组数据后根据数据包和FEC包即可进行校验和纠错。</p>
+<h4 id="连接迁移"><a href="#连接迁移" class="headerlink" title="连接迁移"></a>连接迁移</h4><p>TCP协议使用五元组来表示一条唯一的连接，当我们从4G环境切换到wifi环境时，手机的IP地址就会发生变化，这时必须创建新的TCP连接才能继续传输数据。</p>
+<p>QUIC协议基于UDP实现摒弃了五元组的概念，使用64位的随机数作为连接的ID，并使用该ID表示连接。</p>
+<p>基于QUIC协议之下，我们在日常wifi和4G切换时，或者不同基站之间切换都不会重连，从而提高业务层的体验。</p>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li>本文标题：http的keep-alive探究</li>
+        <li>本文作者：Kale</li>
+        <li>创建时间：2022-08-31 10:59:39</li>
+        <li>
+            本文链接：https://kalew515.com/2022/08/31/http的keep-alive探究/
+        </li>
+        <li>
+            版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <div class="article-nav">
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                           rel="next"
+                           href="/2022/08/11/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3%E7%B3%BB%E7%BB%9F%E5%89%AA%E8%B4%B4%E6%9D%BF/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">深入了解系统剪贴板</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                              <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+        
+            <div class="comment-container">
+                <div class="comments-container">
+    <div id="comment-anchor"></div>
+    <div class="comment-area-title">
+        <i class="fas fa-comments">&nbsp;评论</i>
+    </div>
+    
+
+        
+            
+    <div class="valine-container">
+        <script 
+                src="//cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js"></script>
+        <div id="vcomments"></div>
+        <script >
+            function loadValine() {
+                new Valine({
+                    el: '#vcomments',
+                    appId: 'MUzcPwyvUoU6stt1PKOcCYKN-gzGzoHsz',
+                    appKey: 'PsMBJlPVAFRMlvn3oYDPS68r',
+                    meta: ['nick', 'mail', 'link'],
+                    avatar: 'wavatar',
+                    enableQQ: true,
+                    placeholder: 'QAQ',
+                    lang: 'zh-CN'.toLowerCase()
+                });
+
+                function getAuthor(language) {
+                    switch (language) {
+                        case 'en':
+                            return 'Author';
+                        case 'zh-CN':
+                            return '博主';
+                        default:
+                            return 'Master';
+                    }
+                }
+
+                // Add "Author" identify
+                const getValineDomTimer = setInterval(() => {
+                    const vcards = document.querySelectorAll('#vcomments .vcards .vcard');
+                    if (vcards.length > 0) {
+                        let author = 'Kale';
+
+                        if (author) {
+                            for (let vcard of vcards) {
+                                const vnick_dom = vcard.querySelector('.vhead .vnick');
+                                const vnick = vnick_dom.innerHTML;
+                                if (vnick === author) {
+                                    vnick_dom.innerHTML = `${vnick} <span class="author">${getAuthor(KEEP.hexo_config.language)}</span>`
+                                }
+                            }
+                        }
+                        clearInterval(getValineDomTimer);
+                    } else {
+                        clearInterval(getValineDomTimer);
+                    }
+                }, 2000);
+            }
+
+            if ('false') {
+                const loadValineTimeout = setTimeout(() => {
+                    loadValine();
+                    clearTimeout(loadValineTimeout);
+                }, 1000);
+            } else {
+                window.addEventListener('DOMContentLoaded', loadValine);
+            }
+        </script>
+    </div>
+
+
+
+        
+    
+</div>
+
+            </div>
+        
+    </div>
+</div>
+
+
+                
+            </div>
+
+        </div>
+
+        <div class="page-main-content-bottom">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info info-item">
+            &copy;
+            
+            2022&nbsp;<i class="fas fa-heart icon-animate"></i>&nbsp;<a href="/">Kale</a>
+        </div>
+        
+        <div class="theme-info info-item">
+            由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a>
+        </div>
+        
+        
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item page-aside-toggle">
+                <i class="fas fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+            <li class="go-comment">
+                <i class="fas fa-comment"></i>
+            </li>
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-bottom-side-tools">
+        <div class="side-tools-container">
+    <ul class="side-tools-list">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <li class="tools-item tool-expand-width flex-center">
+            <i class="fas fa-arrows-alt-h"></i>
+        </li>
+
+        <li class="tools-item tool-dark-light-toggle flex-center">
+            <i class="fas fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+            <li class="tools-item tool-scroll-to-top flex-center">
+                <i class="fas fa-arrow-up"></i>
+            </li>
+        
+
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list">
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+        
+    </ul>
+</div>
+
+    </div>
+
+    
+        <aside class="page-aside">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP%E7%9A%84Keep-Alive"><span class="nav-text">HTTP的Keep-Alive</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP%E7%9A%84keepalive"><span class="nav-text">TCP的keepalive</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-text">验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#keep-alive"><span class="nav-text">keep-alive</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#close"><span class="nav-text">close</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go%E4%B8%ADhttp%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84%E5%85%B3%E9%97%AD%E8%BF%9E%E6%8E%A5%E9%80%BB%E8%BE%91"><span class="nav-text">go中http服务器的关闭连接逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Http-2-0"><span class="nav-text">Http 2.0</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Http-1-1-%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-text">Http 1.1 的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SPDY"><span class="nav-text">SPDY</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Http-2-0-%E4%B8%BB%E8%A6%81%E6%94%B9%E5%8A%A8"><span class="nav-text">Http 2.0 主要改动</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B0%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%A0%BC%E5%BC%8F"><span class="nav-text">新的二进制格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E5%85%B1%E4%BA%AB"><span class="nav-text">连接共享</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#header%E5%8E%8B%E7%BC%A9"><span class="nav-text">header压缩</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9B%B4%E5%AE%89%E5%85%A8%E7%9A%84SSL"><span class="nav-text">更安全的SSL</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Http-3-0"><span class="nav-text">Http 3.0</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Http-2-0-%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-text">Http 2.0 的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Http-3-0-%E7%AE%80%E4%BB%8B"><span class="nav-text">Http 3.0 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF"><span class="nav-text">优势</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%8D%E5%90%91%E5%AE%89%E5%85%A8"><span class="nav-text">前向安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%8D%E5%90%91%E7%BA%A0%E9%94%99"><span class="nav-text">前向纠错</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E8%BF%81%E7%A7%BB"><span class="nav-text">连接迁移</span></a></li></ol></li></ol></li></ol>
+    </div>
+</div>
+        </aside>
+    
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+
+</main>
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/header-shrink.js"></script>
+
+<script src="/js/back2top.js"></script>
+
+<script src="/js/dark-light-toggle.js"></script>
+
+
+
+
+
+    
+<script src="/js/code-copy.js"></script>
+
+
+
+
+
+<div class="post-scripts">
+    
+        
+<script src="/js/left-side-toggle.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/toc.js"></script>
+
+    
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/maodian.js"></script>
+</html>
