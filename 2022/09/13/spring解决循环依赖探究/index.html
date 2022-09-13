@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="随笔">
+    <meta name="author" content="Kale">
+    
+    <title>
+        
+            spring解决循环依赖探究 |
+        
+        Kale&#39;s Notes
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="shortcut icon" href="/images/favicon.png">
+    
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+
+    <script id="hexo-configurations">
+    let KEEP = window.KEEP || {};
+    KEEP.hexo_config = {"hostname":"kalew515.com","root":"/","language":"zh-CN","path":"search.xml"};
+    KEEP.theme_config = {"toc":{"enable":true,"number":false,"expand_all":true,"init_open":true},"style":{"primary_color":"#0066CC","avatar":"/images/kale_circle.png","favicon":"/images/favicon.png","article_img_align":"left","left_side_width":"260px","content_max_width":"920px","hover":{"shadow":false,"scale":true},"first_screen":{"enable":false,"background_img":"/images/bg.svg","description":"Just a blog ~"},"scroll":{"progress_bar":{"enable":true},"percent":{"enable":false}}},"local_search":{"enable":false,"preload":false},"code_copy":{"enable":true,"style":"default"},"pjax":{"enable":false},"lazyload":{"enable":false},"version":"3.4.3"};
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 月前","year":"%s 年前"};
+  </script>
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+        <span class="scroll-progress-bar"></span>
+    
+
+    
+</div>
+
+
+<main class="page-container">
+
+    
+
+    <div class="page-main-content">
+
+        <div class="page-main-content-top">
+            <header class="header-wrapper">
+
+    <div class="header-content">
+        <div class="left">
+            
+                <a class="logo-image" href="/">
+                    <img src="/images/kale_circle.png">
+                </a>
+            
+            <a class="logo-title" href="/">
+                Kale&#39;s Notes
+            </a>
+        </div>
+
+        <div class="right">
+            <div class="pc">
+                <ul class="menu-list">
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/"
+                            >
+                                首页
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/archives"
+                            >
+                                归档
+                            </a>
+                        </li>
+                    
+                    
+                </ul>
+            </div>
+            <div class="mobile">
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list">
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/">首页</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/archives">归档</a>
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle">
+
+            <div class="main-content">
+
+                
+                    <div class="fade-in-down-animation">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            <span class="title-hover-animation">spring解决循环依赖探究</span>
+        </div>
+
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/kale_circle.png">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Kale</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fas fa-edit"></i>&nbsp;2022-09-13 23:20:08
+    </span>
+    
+    
+
+    
+    
+    
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <p>了解了一下Spring中解决循环依赖的手段，记录一下。</p>
+<h2 id="循环依赖"><a href="#循环依赖" class="headerlink" title="循环依赖"></a>循环依赖</h2><p>首先需要解释一下什么是循环依赖，例如有两个对象A和B，A依赖B，B依赖A，这就构成了循环依赖，循环依赖其实是个错误的设计，在实际工程中肯定是需要避免的，例如在go中如果产生了循环依赖，直接就会编译报错，但是在spring中，针对循环依赖提出了解决方案，虽然循环依赖是错误设计，但这种解决方案却很精妙。</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>我们首先预设两个对象A和B，其中A依赖B，B依赖A。在spring中，一个比较核心的方法就是<code>refresh()</code>方法，该方法会完成容器的创建工作并且做好一切准备工作，所以创建bean也是在该方法中完成的。而在该方法的<code>finishBeanFactoryInitialization(beanFactory)</code>中，最后的<code>beanFactory.preInstantiateSingletons()</code>方法会实例化所有未实例化的且没有设置为懒加载的bean。该方法会遍历<code>beanDefinitionNames</code>，最先遍历到的就是<code>&quot;a&quot;</code>,会调用<code>getBean(beanName)</code>方法，继而调用<code>doGetBean()</code>方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// doGetBean，代码省去了一些细节</span></span><br><span class="line"><span class="keyword">protected</span> &lt;T&gt; <span class="function">T <span class="title">doGetBean</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    String name, <span class="meta">@Nullable</span> Class&lt;T&gt; requiredType, <span class="meta">@Nullable</span> Object[] args, <span class="keyword">boolean</span> typeCheckOnly)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line"></span><br><span class="line">    String beanName = transformedBeanName(name);</span><br><span class="line">    Object beanInstance;</span><br><span class="line">    Object sharedInstance = getSingleton(beanName);</span><br><span class="line">    <span class="keyword">if</span> (sharedInstance != <span class="keyword">null</span> &amp;&amp; args == <span class="keyword">null</span>) &#123;</span><br><span class="line">        beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (mbd.isSingleton()) &#123;</span><br><span class="line">                sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">                        destroySingleton(beanName);</span><br><span class="line">                        <span class="keyword">throw</span> ex;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">                beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">            <span class="keyword">throw</span> ex;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">finally</span> &#123;</span><br><span class="line">            beanCreation.end();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> adaptBeanInstance(name, beanInstance, requiredType);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>主要关注第15行，调用了<code>getSingleton(String beanName, ObjectFactory&lt;?&gt; singletonFactory)</code>方法，该方法内会调用第二个参数，而也就是第17行的<code>createBean()</code>方法，在该方法中会再去调用<code>doCreateBean()</code>方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// doCreateBean，代码省去了一些细节</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">doCreateBean</span><span class="params">(String beanName, RootBeanDefinition mbd, <span class="meta">@Nullable</span> Object[] args)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> BeanCreationException </span>&#123;</span><br><span class="line">    BeanWrapper instanceWrapper = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">if</span> (instanceWrapper == <span class="keyword">null</span>) &#123;</span><br><span class="line">        instanceWrapper = createBeanInstance(beanName, mbd, args);</span><br><span class="line">    &#125;</span><br><span class="line">    Object bean = instanceWrapper.getWrappedInstance();</span><br><span class="line">    <span class="keyword">boolean</span> earlySingletonExposure = (mbd.isSingleton() &amp;&amp; <span class="keyword">this</span>.allowCircularReferences &amp;&amp;</span><br><span class="line">                                      isSingletonCurrentlyInCreation(beanName));</span><br><span class="line">    <span class="keyword">if</span> (earlySingletonExposure) &#123;</span><br><span class="line">        addSingletonFactory(beanName, () -&gt; getEarlyBeanReference(beanName, mbd, bean));</span><br><span class="line">    &#125;</span><br><span class="line">    Object exposedObject = bean;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        populateBean(beanName, mbd, instanceWrapper);</span><br><span class="line">        exposedObject = initializeBean(beanName, exposedObject, mbd);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (earlySingletonExposure) &#123;</span><br><span class="line">        Object earlySingletonReference = getSingleton(beanName, <span class="keyword">false</span>);</span><br><span class="line">        <span class="keyword">if</span> (earlySingletonReference != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (exposedObject == bean) &#123;</span><br><span class="line">                exposedObject = earlySingletonReference;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        registerDisposableBeanIfNecessary(beanName, bean, mbd);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (BeanDefinitionValidationException ex) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> exposedObject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在第六行，对A对象进行了实例化，注意此时只是实例化了对象，还没有进行属性填充，然后在第12行通过调用<code>addSingletonFactory()</code>方法将对象放到一个map中，也就是<code>singletonFactories</code>，即俗称的三级缓存中，注意放入的也是一个lambda表达式，接着在第16行，要完成属性填充，调用链是<code>populateBean(beanName, mbd, instanceWrapper) --&gt; applyPropertyValues(beanName, mbd, bw, pvs)</code>，此时发现在我们预设的环境下，A对象依赖B对象，那么，会调用<code>valueResolver.resolveValueIfNecessary(pv, originalValue)</code>方法，如果传入的<code>originalValue</code>是<code>RuntimeBeanReference</code>类型，则会调用<code>resolveReference(argName, ref)</code>方法，而这个方法里，就会走到<code>getBean()</code>的那一套流程，从而创建出B对象。</p>
+<p>在实例化B对象后，同样也会进入到属性填充流程，也会进入<code>populateBean(beanName, mbd, instanceWrapper) --&gt; applyPropertyValues(beanName, mbd, bw, pvs)</code>调用链，在调用<code>valueResolver.resolveValueIfNecessary(pv, originalValue)</code>方法时，又会进入到<code>getBean()</code>的流程，但此时不同的是，<code>getSingleton()</code>方法可以返回对象了，因为在前面创建A对象时，已经将早期的A对象加入到<code>singletonFactories</code>中，也就是三级缓存中，而此时，会走到三级缓存处<code>singletonObject = singletonFactory.getObject()</code>，调用了lambda表达式，也就是<code>getEarlyBeanReference(beanName, mbd, bean)</code>方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">getEarlyBeanReference</span><span class="params">(String beanName, RootBeanDefinition mbd, Object bean)</span> </span>&#123;</span><br><span class="line">    Object exposedObject = bean;</span><br><span class="line">    <span class="keyword">if</span> (!mbd.isSynthetic() &amp;&amp; hasInstantiationAwareBeanPostProcessors()) &#123;</span><br><span class="line">        <span class="keyword">for</span> (SmartInstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().smartInstantiationAware) &#123;</span><br><span class="line">            exposedObject = bp.getEarlyBeanReference(exposedObject, beanName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> exposedObject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法非常关键，会判断是否需要进行aop，如果需要，则会在此时进行aop，然后返回增强后的对象。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">singletonObject = singletonFactory.getObject();</span><br><span class="line"><span class="keyword">this</span>.earlySingletonObjects.put(beanName, singletonObject);</span><br><span class="line"><span class="keyword">this</span>.singletonFactories.remove(beanName);</span><br></pre></td></tr></table></figure>
+<p>拿到对象后，可以看到会将对象放入到<code>earlySingletonObjects</code>中，也就是俗称的二级缓存中，然后将三级缓存中对应的值删除。</p>
+<p>此时B对象的属性填充环节完毕，再进行初始化工作，最后调用<code>addSingleton()</code>方法将对象放入<code>singletonObjects</code>中，也就是俗称的一级缓存，存放完整的单例对象，然后将对象从三级缓存以及二级缓存中移除。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">addSingleton</span><span class="params">(String beanName, Object singletonObject)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>.singletonObjects) &#123;</span><br><span class="line">        <span class="keyword">this</span>.singletonObjects.put(beanName, singletonObject);</span><br><span class="line">        <span class="keyword">this</span>.singletonFactories.remove(beanName);</span><br><span class="line">        <span class="keyword">this</span>.earlySingletonObjects.remove(beanName);</span><br><span class="line">        <span class="keyword">this</span>.registeredSingletons.add(beanName);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此时B对象创建流程结束，A对象拿到完整的B对象，进行赋值，放入单例池。自此，循环依赖得到解决。</p>
+<h2 id="一些思考"><a href="#一些思考" class="headerlink" title="一些思考"></a>一些思考</h2><p>可以看到，spring通过三级缓存，解决了循环依赖问题，那么，为什么需要三级缓存呢，网上很多回答解释说是有可能对象需要进行aop，所以需要三级缓存来解决，但其实只需要一级缓存也能解决循环依赖问题，并且可以实现aop。</p>
+<p>我们设计这样一个场景，A对象依赖B对象，B对象依赖A对象和C对象，C对象依赖A对象，并且A对象还需要进行aop，即存入单例池的应该是A的代理对象。</p>
+<ul>
+<li>首先创建A对象，发现需要增强，则增强后放入单例池</li>
+<li>然后进行属性填充，发现依赖B对象，而单例池中没有找到B对象，则开始创建B对象</li>
+<li>实例化B对象后将B对象放入单例池，然后进行属性填充，发现依赖A对象，在单例池中找到A对象(代理对象)，进行赋值，又发现依赖C对象，而单例池中没有找到C对象，则开始创建C对象</li>
+<li>实例化C对象后将C对象放入单例池，然后进行属性填充，发现依赖A对象，在单例池中找到A对象(代理对象)，进行赋值，结束</li>
+<li>返回C对象给B对象，B对象进行属性填充，结束</li>
+<li>返回B对象给A对象，A对象进行属性填充，结束</li>
+</ul>
+<p>可以发现上述流程只用到了一级缓存，并且预设场景中存在多级循环依赖以及需要aop的对象，下面写了一个demo实现了上述流程：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyBeanFactory</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Map&lt;String, Object&gt; singletonObjects = <span class="keyword">new</span> ConcurrentHashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MyBeanFactory</span> <span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 创建A时发现需要进行增强</span></span><br><span class="line">        AProxy aProxy = <span class="keyword">new</span> AProxy();</span><br><span class="line">        A a = aProxy.cglibFactory();</span><br><span class="line">        singletonObjects.put(<span class="string">&quot;a&quot;</span>, a);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// A populate阶段，发现缺少B，并且单例池中没有B，则创建B对象</span></span><br><span class="line">        <span class="keyword">if</span> (!singletonObjects.containsKey(<span class="string">&quot;b&quot;</span>)) &#123;</span><br><span class="line">            B b = <span class="keyword">new</span> B();</span><br><span class="line">            singletonObjects.put(<span class="string">&quot;b&quot;</span>, b);</span><br><span class="line">            <span class="comment">// B populate阶段</span></span><br><span class="line">            <span class="keyword">if</span> (!singletonObjects.containsKey(<span class="string">&quot;a&quot;</span>)) &#123;</span><br><span class="line">                <span class="comment">// 如果不存在A对象，则进行创建，但此时已经能找到A对象</span></span><br><span class="line">                event(<span class="string">&quot;创建A对象，并放入单例池&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            b.setA((A) singletonObjects.get(<span class="string">&quot;a&quot;</span>));</span><br><span class="line">            <span class="keyword">if</span> (!singletonObjects.containsKey(<span class="string">&quot;c&quot;</span>)) &#123;</span><br><span class="line">                <span class="comment">// 如果不存在C对象，则进行创建，此时很明显找不到C对象</span></span><br><span class="line">                C c = <span class="keyword">new</span> C();</span><br><span class="line">                singletonObjects.put(<span class="string">&quot;c&quot;</span>, c);</span><br><span class="line">                <span class="comment">// C populate阶段</span></span><br><span class="line">                <span class="keyword">if</span> (!singletonObjects.containsKey(<span class="string">&quot;b&quot;</span>)) &#123;</span><br><span class="line">                    <span class="comment">// 如果不存在A对象，则进行创建，但此时已经能找到A对象</span></span><br><span class="line">                    event(<span class="string">&quot;创建a对象，并放入单例池&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line">                c.setA((A) singletonObjects.get(<span class="string">&quot;a&quot;</span>));</span><br><span class="line">            &#125;</span><br><span class="line">            b.setC((C) singletonObjects.get(<span class="string">&quot;c&quot;</span>));</span><br><span class="line">        &#125;</span><br><span class="line">        a.setB((B) singletonObjects.get(<span class="string">&quot;b&quot;</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">event</span> <span class="params">(String name)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从结果中可以看到，单例池中的对象都是完整对象，并且需要aop的对象也成功对应到了代理对象：</p>
+<img src="/2022/09/13/spring%E8%A7%A3%E5%86%B3%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E6%8E%A2%E7%A9%B6/image-20220914012556520.png" class="">
+<p>由此可见，一级缓存就足以解决这个问题，那么为什么需要三级缓存呢。</p>
+<p>其实三级缓存解决并不是唯一解，解决问题的方法有很多，而spring选择了这一种，考虑一下上面流程中提到的一级缓存解决的方案，必须在实例化对象完毕后就立即检查是否需要进行aop，这个才是问题的关键，因为这样做破坏了原本的bean生命周期，在正常流程中，aop是在<code>initializeBean()</code>方法中通过<code>postProcessAfterInitialization</code>后置处理器去触发，而在发生循环依赖时，则是相当于在<code>populateBean()</code>方法进行了aop，相比正常流程稍微提前了一点。循环依赖本就是需要避免的内容，肯定是不希望因为为了解决循环依赖而去改动原始的流程，所以引入三级缓存的方式来进行解决。</p>
+<p>另外，观察可以发现，二级缓存和三级缓存是配套使用的，三级缓存中的lambda被执行后立即将对象放入二级缓存，并从三级缓存中删除，这是为了避免多级依赖的情况下，反复执行三级缓存中的lambda表达式从而生成不一样的对象，这肯定是不可以接受的，所以需要二级缓存作为中继，二级缓存中存储的一定是经过增强的(如果需要增强)对象。</p>
+<hr>
+<p>看了很久源码，spring的源码太难啃了…很多设计也非常巧妙，比如这个循环依赖问题的解决，另外其实我觉得对三级缓存这个名词不太恰当，所谓的二级缓存和三级缓存其实只是在bean的创建过程中短暂用到，后续就不会再用到，只是一个临时存放对象的map而已。</p>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li>本文标题：spring解决循环依赖探究</li>
+        <li>本文作者：Kale</li>
+        <li>创建时间：2022-09-13 23:20:08</li>
+        <li>
+            本文链接：https://kalew515.com/2022/09/13/spring解决循环依赖探究/
+        </li>
+        <li>
+            版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <div class="article-nav">
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                           rel="next"
+                           href="/2022/08/31/http%E7%9A%84keep-alive%E6%8E%A2%E7%A9%B6/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">http的keep-alive探究</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                              <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+        
+    </div>
+</div>
+
+
+                
+            </div>
+
+        </div>
+
+        <div class="page-main-content-bottom">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info info-item">
+            &copy;
+            
+            2022&nbsp;<i class="fas fa-heart icon-animate"></i>&nbsp;<a href="/">Kale</a>
+        </div>
+        
+        <div class="theme-info info-item">
+            由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a>
+        </div>
+        
+        
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item page-aside-toggle">
+                <i class="fas fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-bottom-side-tools">
+        <div class="side-tools-container">
+    <ul class="side-tools-list">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <li class="tools-item tool-expand-width flex-center">
+            <i class="fas fa-arrows-alt-h"></i>
+        </li>
+
+        <li class="tools-item tool-dark-light-toggle flex-center">
+            <i class="fas fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+            <li class="tools-item tool-scroll-to-top flex-center">
+                <i class="fas fa-arrow-up"></i>
+            </li>
+        
+
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list">
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+        
+    </ul>
+</div>
+
+    </div>
+
+    
+        <aside class="page-aside">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96"><span class="nav-text">循环依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">解决方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83"><span class="nav-text">一些思考</span></a></li></ol>
+    </div>
+</div>
+        </aside>
+    
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+
+</main>
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/header-shrink.js"></script>
+
+<script src="/js/back2top.js"></script>
+
+<script src="/js/dark-light-toggle.js"></script>
+
+
+
+
+
+    
+<script src="/js/code-copy.js"></script>
+
+
+
+
+
+<div class="post-scripts">
+    
+        
+<script src="/js/left-side-toggle.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/toc.js"></script>
+
+    
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/maodian.js"></script>
+</html>
