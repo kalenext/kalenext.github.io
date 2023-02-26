@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="随笔">
+    <meta name="author" content="Kale">
+    
+    <title>
+        
+            一次排查服务在磁盘满时内存不断上涨问题的过程 |
+        
+        Kale&#39;s Notes
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="shortcut icon" href="/images/favicon.png">
+    
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+
+    <script id="hexo-configurations">
+    let KEEP = window.KEEP || {};
+    KEEP.hexo_config = {"hostname":"kalew515.com","root":"/","language":"zh-CN","path":"search.xml"};
+    KEEP.theme_config = {"toc":{"enable":true,"number":false,"expand_all":true,"init_open":true},"style":{"primary_color":"#0066CC","avatar":"/images/kale_circle.png","favicon":"/images/favicon.png","article_img_align":"left","left_side_width":"260px","content_max_width":"920px","hover":{"shadow":false,"scale":true},"first_screen":{"enable":false,"background_img":"/images/bg.svg","description":"Just a blog ~"},"scroll":{"progress_bar":{"enable":true},"percent":{"enable":false}}},"local_search":{"enable":false,"preload":false},"code_copy":{"enable":true,"style":"default"},"pjax":{"enable":false},"lazyload":{"enable":false},"version":"3.4.3"};
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 月前","year":"%s 年前"};
+  </script>
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+        <span class="scroll-progress-bar"></span>
+    
+
+    
+</div>
+
+
+<main class="page-container">
+
+    
+
+    <div class="page-main-content">
+
+        <div class="page-main-content-top">
+            <header class="header-wrapper">
+
+    <div class="header-content">
+        <div class="left">
+            
+                <a class="logo-image" href="/">
+                    <img src="/images/kale_circle.png">
+                </a>
+            
+            <a class="logo-title" href="/">
+                Kale&#39;s Notes
+            </a>
+        </div>
+
+        <div class="right">
+            <div class="pc">
+                <ul class="menu-list">
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/"
+                            >
+                                首页
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/archives"
+                            >
+                                归档
+                            </a>
+                        </li>
+                    
+                    
+                </ul>
+            </div>
+            <div class="mobile">
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list">
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/">首页</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/archives">归档</a>
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle">
+
+            <div class="main-content">
+
+                
+                    <div class="fade-in-down-animation">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            <span class="title-hover-animation">一次排查服务在磁盘满时内存不断上涨问题的过程</span>
+        </div>
+
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/kale_circle.png">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Kale</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fas fa-edit"></i>&nbsp;2023-02-26 12:12:05
+    </span>
+    
+    
+
+    
+    
+    
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <p>之前mentor就提过检索服务在磁盘满时内存占用会不断上涨，想复现一下排查一下问题，但是磁盘满这个条件一直很难满足，毕竟开发机不是我一个人在用，刚好昨天发现开发机磁盘满了，就做了一下实验，排查了一下原因，记录一下过程，考虑到数据安全问题，这里去掉了具体的数据结果，只对最后的结果进行说明</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><ul>
+<li>检索服务在磁盘满时内存会不断上涨，需要排查一下原因，猜测可能与日志有关</li>
+</ul>
+<h2 id="实验设计"><a href="#实验设计" class="headerlink" title="实验设计"></a>实验设计</h2><h3 id="方案设计"><a href="#方案设计" class="headerlink" title="方案设计"></a>方案设计</h3><ul>
+<li>设置A、B、C三组实验：<ul>
+<li>A组为磁盘满，打开日志功能，100qps，压测15分钟，记录内存和cpu的变化情况</li>
+<li>B组为磁盘满，关闭日志功能，100qps，压测15分钟，记录内存和cpu的变化情况</li>
+<li>C组为磁盘空间足够，打开日志功能，100qps，压测15分钟，记录内存和cpu变化情况</li>
+</ul>
+</li>
+<li>其中A组主要是为了复现问题，B组和C组为对照组，其中C组为正常环境，通过对比三组之间的结果，可以得出磁盘满时是否会出现内存占用过高的问题，并且判断其是否与日志有关</li>
+</ul>
+<h3 id="实验数据"><a href="#实验数据" class="headerlink" title="实验数据"></a>实验数据</h3><ul>
+<li>由于数据安全问题，具体的实验数据就不进行展示，只说大体的结论</li>
+</ul>
+<h4 id="内存变化"><a href="#内存变化" class="headerlink" title="内存变化"></a>内存变化</h4><ul>
+<li>在三组中，A组的内存占用会不断上涨，并且在15分钟时占用是B组和C组的几倍，而B组和C组的内存占用基本一致，维持在一个水平，波动不明显</li>
+</ul>
+<h4 id="CPU变化"><a href="#CPU变化" class="headerlink" title="CPU变化"></a>CPU变化</h4><ul>
+<li>在三组中，A组的CPU占用一致维持着一个较低的水平，而B组和C组的CPU占用则基本一致，维持在A组CPU占用的6～7倍的水平，且波动不明显</li>
+</ul>
+<h4 id="GC信息"><a href="#GC信息" class="headerlink" title="GC信息"></a>GC信息</h4><ul>
+<li>在上述实验完毕后，可以得知A组的实验结果与B组以及C组有较大的差异，且B组和C组的实验结果基本一致，为什么会出现这个问题呢，下面结合GC信息来进行分析，使用<code>GODEBUG=gctrace=1 ./xxxxx</code>来启动服务，就可以打印出gc信息</li>
+<li>分析gc的结果，A组在15分钟的压测过程中只进行了15次gc，而B组为1300多次，C组为1400多次，基本一致，考虑到gc会额外占用cpu时间，所以B组和C组的cpu占用高于A组是正常的</li>
+</ul>
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><h4 id="基本分析"><a href="#基本分析" class="headerlink" title="基本分析"></a>基本分析</h4><ul>
+<li><strong>那么为什么A组的gc次数如此之少呢？</strong>下面可以结合压测报告来进行分析，压测结果中，B组和C组的平响、P50、P75、P95、P99基本一致，但是A组的请求基本都超时了，猜测可能是由于请求均超时，也就是一条请求处理的时间过长，导致请求的生命周期没有结束，导致计算的中间结果无法被gc，所以gc次数很少，并且内存占用很高，<strong>但是为什么请求的处理时间会过长呢？为什么去掉日志就可以正常处理请求呢？</strong></li>
+</ul>
+<h4 id="深入分析"><a href="#深入分析" class="headerlink" title="深入分析"></a>深入分析</h4><ul>
+<li>通过pprof工具进行分析，首先将磁盘占满，创建大文件的方式可以使用<code>fallocate -l 50G text.txt</code>这种方式，开启日志，并且启动检索服务，发送一条请求，发现没有响应，首先分析seelog的源码，seelog就是检索服务使用的日志库</li>
+</ul>
+<ol>
+<li><p>检索服务在初始化日志对象时，实际上调用的是下面的方法，省去了部分内容，实际上当日志类型没有定义的时候，使用的就是<code>asyncLooploggerTypeFromString</code>类型的日志对象，</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">createLoggerFromFullConfig</span><span class="params">(config *configForParsing)</span> <span class="params">(LoggerInterface, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> config.LogType == syncloggerTypeFromString &#123;</span><br><span class="line">		<span class="keyword">return</span> NewSyncLogger(&amp;config.logConfig), <span class="literal">nil</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> config.LogType == asyncLooploggerTypeFromString &#123;</span><br><span class="line">		<span class="keyword">return</span> NewAsyncLoopLogger(&amp;config.logConfig), <span class="literal">nil</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> config.LogType == asyncTimerloggerTypeFromString &#123;</span><br><span class="line">        ...</span><br><span class="line">		<span class="keyword">return</span> logger, <span class="literal">nil</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> config.LogType == adaptiveLoggerTypeFromString &#123;</span><br><span class="line">        ...</span><br><span class="line">		<span class="keyword">return</span> logger, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;invalid config log type/data&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>那么会走到下面的方法，创建<code>asyncLoopLogger</code>对象，这个对象内部其实包含了一个<code>asyncLogger</code>对象，可以看到<code>asyncLogger</code>对象内部持有一个双向链表，并且有一个锁。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewAsyncLoopLogger</span><span class="params">(config *logConfig)</span> *<span class="title">asyncLoopLogger</span></span> &#123;</span><br><span class="line">	asnLoopLogger := <span class="built_in">new</span>(asyncLoopLogger)</span><br><span class="line">	asnLoopLogger.asyncLogger = *newAsyncLogger(config)</span><br><span class="line">	<span class="keyword">go</span> asnLoopLogger.processQueue()</span><br><span class="line">	<span class="keyword">return</span> asnLoopLogger</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> asyncLoopLogger <span class="keyword">struct</span> &#123;</span><br><span class="line">	asyncLogger</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> asyncLogger <span class="keyword">struct</span> &#123;</span><br><span class="line">	commonLogger</span><br><span class="line">	msgQueue         *list.List</span><br><span class="line">	queueHasElements *sync.Cond</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>上述在实例化<code>asyncLoopLogger</code>对象时，可以看到是启动了一个协程，不断执行下面的任务，实际上就是当日志打印未关闭时会不断进行<code>processItem()</code>操作，在这个方法里首先会去抢<code>asnLoopLogger.queueHasElements.L</code>的锁，注意这把锁其实就是内部持有的<code>asyncLogger</code>的<code>queueHasElements.L</code>锁</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(asnLoopLogger *asyncLoopLogger)</span> <span class="title">processQueue</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> !asnLoopLogger.Closed() &#123;</span><br><span class="line">		closed := asnLoopLogger.processItem()</span><br><span class="line">		<span class="keyword">if</span> closed &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(asnLoopLogger *asyncLoopLogger)</span> <span class="title">processItem</span><span class="params">()</span> <span class="params">(closed <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	asnLoopLogger.queueHasElements.L.Lock()</span><br><span class="line">	<span class="keyword">defer</span> asnLoopLogger.queueHasElements.L.Unlock()</span><br><span class="line">	<span class="keyword">for</span> asnLoopLogger.msgQueue.Len() == <span class="number">0</span> &amp;&amp; !asnLoopLogger.Closed() &#123;</span><br><span class="line">		asnLoopLogger.queueHasElements.Wait()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> asnLoopLogger.Closed() &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line">	asnLoopLogger.processQueueElement()</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>在打印日志时，实际上不论什么类型的日志，最终都会走到下面的log方法中，在log方法中，首先会去抢<code>cLogger.m</code>锁，这个锁是互斥锁，那么如果多个协程并行请求这个方法，最终会是串行执行的</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cLogger *commonLogger)</span> <span class="title">log</span><span class="params">(level LogLevel, message fmt.Stringer, stackCallDepth <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> cLogger.unusedLevels[level] &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	cLogger.m.Lock()</span><br><span class="line">	<span class="keyword">defer</span> cLogger.m.Unlock()</span><br><span class="line">	<span class="keyword">if</span> cLogger.Closed() &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	context, _ := specifyContext(stackCallDepth+cLogger.addStackDepth, cLogger.customContext)</span><br><span class="line">	cLogger.innerLogger.innerLog(level, context, message)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>如果成功抢到锁，会进入到下面方法中，向链表中添加日志，在第6行可以看到，首先会进行抢<code>asnLogger.queueHasElements.L</code>的操作，注意这把锁和上面写日志的协程需要抢的锁其实是同一把，所以这个链表的读写是完全互斥的</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(asnLogger *asyncLogger)</span> <span class="title">addMsgToQueue</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	level LogLevel,</span></span></span><br><span class="line"><span class="function"><span class="params">	context LogContextInterface,</span></span></span><br><span class="line"><span class="function"><span class="params">	message fmt.Stringer)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> !asnLogger.Closed() &#123;</span><br><span class="line">		asnLogger.queueHasElements.L.Lock()</span><br><span class="line">		<span class="keyword">defer</span> asnLogger.queueHasElements.L.Unlock()</span><br><span class="line">		<span class="keyword">if</span> asnLogger.msgQueue.Len() &gt;= MaxQueueSize &#123;</span><br><span class="line">			fmt.Printf(<span class="string">&quot;Seelog queue overflow: more than %v messages in the queue. Flushing.\n&quot;</span>, MaxQueueSize)</span><br><span class="line">			asnLogger.flushQueue(<span class="literal">false</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		queueItem := msgQueueItem&#123;level, context, message&#125;</span><br><span class="line">		asnLogger.msgQueue.PushBack(queueItem)</span><br><span class="line">		asnLogger.queueHasElements.Broadcast()</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		err := fmt.Errorf(<span class="string">&quot;queue closed! Cannot process element: %d %#v&quot;</span>, level, message)</span><br><span class="line">		reportInternalError(err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<ul>
+<li>根据上述分析，理论上<ul>
+<li>应该有一个协程A，来不断读取链表中的日志，并执行write系统调用</li>
+<li>应该有一个协程B，抢到了log方法中的<code>cLogger.m</code>锁，并与上述协程，两个协程中有一个阻塞在抢<code>asnLogger.queueHasElements.L</code>锁处，有一个可以往下执行</li>
+<li>应该有大于等于一个协程C，阻塞在log方法中的<code>cLogger.m</code>锁处</li>
+</ul>
+</li>
+<li>接下来使用pprof工具查看协程信息，<code>go tool pprof http://[ip]:[port]/debug/pprof/goroutines</code>，这里具体的截图就不进行展示，结论是验证了上述的推论，其中，协程A在执行write系统调用，协程B阻塞在抢<code>asnLogger.queueHasElements.L</code>锁处，有多个协程C阻塞在log方法中的抢<code>cLogger.m</code>锁处</li>
+<li>通过上述的分析以及实验，可以得知seelog日志库的性能是比较差的，全库使用的都是互斥锁，对比来看，项目中使用的另一个集团的日志库使用的就是cas操作，大部分情况下省去了上下文切换的开销，以及在链表方面，可以参考多维数组的方式，采用多维链表的形式，让锁的粒度更小，让同时能进入写链表的协程更多，这是一些可能的优化方案，seelog库在github上最后一次版本更新已经是2015年，年代太过久远</li>
+<li>理论上日志库性能较低，那么当请求大量到来时，可能会产生大量协程阻塞，接下来还是使用pprof工具进行分析：<ul>
+<li>在A组，压测10分钟时，使用pprof查看协程信息，可以看到确实有68000多个协程阻塞，查看其细节信息，有64000多个协程都是阻塞在调用seelog的log方法中，抢<code>cLogger.m</code>锁的过程产生了阻塞，这些协程实际上都是请求产生的，请求被阻塞，自然无法正常响应。这里还有4000多个协程被阻塞，实际上是调用了集团的另一个日志库，用cron启动了后台任务，会定期新开协程去执行一些统计的任务，这些协程和请求无关，所以不会阻塞请求，但是它们也和seelog库一样被阻塞了</li>
+<li>对比C组对照组，压测10分钟时使用pprof查看协程信息，可以发现协程的数量是非常少的，只有几百个，其中处于阻塞中的只有300多个</li>
+</ul>
+</li>
+<li><strong>那么为什么内存会不断上涨呢？</strong>一方面是协程的不断增加，另一方面是协程阻塞在打印日志处，导致请求的中间计算结果无法被gc回收，随着请求的增多，内存也会不断上涨</li>
+<li>通过上述分析得知，是由于seelog库的性能下降，导致请求被阻塞，大量请求堆积，导致中间计算结果无法被释放，导致内存不断上涨，并且随着请求到来协程的数量也不断增多，锁竞争加剧，也加剧了这一现象。那么最后一个问题是：<strong>为什么磁盘满会导致seelog库的性能下降呢？</strong><ul>
+<li>事实上，磁盘满不仅仅对于seelog库的性能有较大影响，对于检索服务中使用的集团的另一个日志库也有着较大的影响，在B组中，关掉seelog库的日志服务，虽然服务的平响以及内存和cpu不会产生什么明显的变化，但是实际上检索服务中的cron任务会定时启动新的协程，去执行一些任务，而这些任务和请求无关，所以不会阻塞请求，不会导致明显的内存上涨，不会影响平响，但是阻塞的协程数仍然是会不断上涨的，只不过这个周期是比较长的</li>
+<li><strong>所以根本原因在于：</strong>在正常情况下，执行<code>write</code>系统调用是非常快的，<code>write</code>系统调用正常只会将待写入的内容写入page cache，但是当执行<code>write</code>系统调用时发现page cache内容过多，就会阻塞write调用，将page cache的内容进行刷盘，但是此时磁盘是满的，没有多余空间可供写入，再回到<code>write</code>调用，返回错误信息，由于刷盘不成功，每次<code>write</code>调用都会进行此过程，大大加长了调用的时间。使用strace对比一下磁盘满时和不满时执行系统调用所花费的时间，可以发现磁盘满时，执行<code>futex</code>和<code>write</code>调用，10000多次的耗时达到了8秒和6秒，而正常情况下，同样的执行次数，耗时是毫秒级。</li>
+</ul>
+</li>
+</ul>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><ul>
+<li>磁盘满时，由于<code>write</code>系统调用耗时增长，随着请求的协程增多，打印日志的请求会不断增多，锁竞争会加剧，导致请求执行缓慢，导致中间计算结果无法被gc回收，最终导致内存不断上涨</li>
+<li>可能的解决方案：<ul>
+<li>磁盘容量报警，不允许磁盘满</li>
+<li>服务使用请求级的超时控制，一旦超时立即快速降级，并且释放资源</li>
+</ul>
+</li>
+<li>更换日志库应该解决不了问题，因为这是系统级的问题，可能会像另一个日志库一样，内存和cpu没变化，但是协程会不断增多，问题暴露出来的时间会加长</li>
+</ul>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li>本文标题：一次排查服务在磁盘满时内存不断上涨问题的过程</li>
+        <li>本文作者：Kale</li>
+        <li>创建时间：2023-02-26 12:12:05</li>
+        <li>
+            本文链接：https://kalew515.com/2023/02/26/一次排查服务在磁盘满时内存不断上涨问题的过程/
+        </li>
+        <li>
+            版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <div class="article-nav">
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                           rel="next"
+                           href="/2022/09/13/spring%E8%A7%A3%E5%86%B3%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E6%8E%A2%E7%A9%B6/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">spring解决循环依赖探究</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                              <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+        
+    </div>
+</div>
+
+
+                
+            </div>
+
+        </div>
+
+        <div class="page-main-content-bottom">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info info-item">
+            &copy;
+            
+            2023&nbsp;<i class="fas fa-heart icon-animate"></i>&nbsp;<a href="/">Kale</a>
+        </div>
+        
+        <div class="theme-info info-item">
+            由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a>
+        </div>
+        
+        
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item page-aside-toggle">
+                <i class="fas fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-bottom-side-tools">
+        <div class="side-tools-container">
+    <ul class="side-tools-list">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <li class="tools-item tool-expand-width flex-center">
+            <i class="fas fa-arrows-alt-h"></i>
+        </li>
+
+        <li class="tools-item tool-dark-light-toggle flex-center">
+            <i class="fas fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+            <li class="tools-item tool-scroll-to-top flex-center">
+                <i class="fas fa-arrow-up"></i>
+            </li>
+        
+
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list">
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+        
+    </ul>
+</div>
+
+    </div>
+
+    
+        <aside class="page-aside">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E8%AE%A1"><span class="nav-text">实验设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1"><span class="nav-text">方案设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E6%95%B0%E6%8D%AE"><span class="nav-text">实验数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%8F%98%E5%8C%96"><span class="nav-text">内存变化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CPU%E5%8F%98%E5%8C%96"><span class="nav-text">CPU变化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC%E4%BF%A1%E6%81%AF"><span class="nav-text">GC信息</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90"><span class="nav-text">分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%88%86%E6%9E%90"><span class="nav-text">基本分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B7%B1%E5%85%A5%E5%88%86%E6%9E%90"><span class="nav-text">深入分析</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-text">结论</span></a></li></ol>
+    </div>
+</div>
+        </aside>
+    
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+
+</main>
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/header-shrink.js"></script>
+
+<script src="/js/back2top.js"></script>
+
+<script src="/js/dark-light-toggle.js"></script>
+
+
+
+
+
+    
+<script src="/js/code-copy.js"></script>
+
+
+
+
+
+<div class="post-scripts">
+    
+        
+<script src="/js/left-side-toggle.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/toc.js"></script>
+
+    
+</div>
+
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/maodian.js"></script>
+</html>
