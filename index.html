@@ -21,7 +21,7 @@
     <script id="hexo-configurations">
     let KEEP = window.KEEP || {};
     KEEP.hexo_config = {"hostname":"kalew515.com","root":"/","language":"zh-CN","path":"search.xml"};
-    KEEP.theme_config = {"toc":{"enable":true,"number":false,"expand_all":true,"init_open":true},"style":{"primary_color":"#0066CC","avatar":"/images/kale_circle.png","favicon":"/images/favicon.png","article_img_align":"left","left_side_width":"260px","content_max_width":"920px","hover":{"shadow":false,"scale":true},"first_screen":{"enable":false,"background_img":"/images/bg.svg","description":"Just a blog ~"},"scroll":{"progress_bar":{"enable":true},"percent":{"enable":false}}},"local_search":{"enable":false,"preload":false},"code_copy":{"enable":true,"style":"default"},"pjax":{"enable":false},"lazyload":{"enable":false},"version":"3.4.3"};
+    KEEP.theme_config = {"toc":{"enable":true,"number":false,"expand_all":true,"init_open":true},"style":{"primary_color":"#0066CC","avatar":"/images/kale_circle.png","favicon":"/images/favicon.png","article_img_align":"left","left_side_width":"260px","content_max_width":"920px","hover":{"shadow":false,"scale":true},"first_screen":{"enable":true,"background_img":"/images/bg.svg","description":"Just a blog ~"},"scroll":{"progress_bar":{"enable":true},"percent":{"enable":false}}},"local_search":{"enable":false,"preload":false},"code_copy":{"enable":true,"style":"default"},"pjax":{"enable":false},"lazyload":{"enable":false},"version":"3.4.3"};
     KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 月前","year":"%s 年前"};
   </script>
 <meta name="generator" content="Hexo 5.3.0"></head>
@@ -40,13 +40,51 @@
 <main class="page-container">
 
     
+        <div class="first-screen-container flex-center fade-in-down-animation">
+    <div class="content flex-center">
+        <div class="description">
+            Just a blog ~
+        </div>
+        
+            <div class="s-icon-list">
+                
+                    
+                        
+                            <span class="s-icon-item github">
+                                <a target="_blank" href="https://github.com/KaleW515">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                            </span>
+                        
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+            </div>
+        
+    </div>
+</div>
+
+    
 
     <div class="page-main-content">
 
         <div class="page-main-content-top">
             <header class="header-wrapper">
 
-    <div class="header-content">
+    <div class="header-content has-first-screen">
         <div class="left">
             
                 <a class="logo-image" href="/">
@@ -120,6 +158,35 @@
                 
                     <div class="home-content-container fade-in-down-animation">
     <ul class="home-article-list">
+        
+            <li class="home-article-item">
+
+                
+
+                <h3 class="home-article-title">
+                    <a href="/2023/04/12/Java%E5%AD%97%E6%AE%B5%E4%BC%98%E5%8C%96%E6%8E%A2%E7%A9%B6/">
+                        Java字段优化探究
+                    </a>
+                </h3>
+
+                <div class="home-article-content markdown-body">
+                    
+                        在看源码的时候，很多时候可以看到方法中会使用一个局部变量接收实例变量，实际上操作的内存是一致的，在看的时候很奇怪为什么要这样写，了解了一下，这是一种字段访问优化的方式，记录一下。
+字段优化举例字段优化就是将原本对对象字段的访问，替换为一个个对局部变量...
+                    
+                </div>
+
+                <div class="home-article-meta-info-container">
+    <div class="home-article-meta-info">
+        <span><i class="fas fa-history"></i>&nbsp;<span class="home-article-date" data-date="Wed Apr 12 2023 09:13:47 GMT+0800">2023-04-12</span></span>
+        
+        
+    </div>
+
+    <a href="/2023/04/12/Java%E5%AD%97%E6%AE%B5%E4%BC%98%E5%8C%96%E6%8E%A2%E7%A9%B6/">阅读全文&nbsp;<i class="fas fa-angle-right"></i></a>
+</div>
+
+            </li>
         
             <li class="home-article-item">
 
@@ -376,34 +443,6 @@
 
             </li>
         
-            <li class="home-article-item">
-
-                
-
-                <h3 class="home-article-title">
-                    <a href="/2021/09/06/%E5%8E%BB%E6%8E%89%E7%83%A6%E4%BA%BA%E7%9A%84csdn/">
-                        去掉烦人的csdn
-                    </a>
-                </h3>
-
-                <div class="home-article-content markdown-body">
-                    
-                        <p>在平时搜索问题时，总是会被csdn给恶心到，基本没什么干货，大多都是从别的网站复制粘贴的内容，并且还使用虚假标题骗取点击率，于是写了一个脚本去掉csdn.<br>
-                    
-                </div>
-
-                <div class="home-article-meta-info-container">
-    <div class="home-article-meta-info">
-        <span><i class="fas fa-history"></i>&nbsp;<span class="home-article-date" data-date="Mon Sep 06 2021 16:53:45 GMT+0800">2021-09-06</span></span>
-        
-        
-    </div>
-
-    <a href="/2021/09/06/%E5%8E%BB%E6%8E%89%E7%83%A6%E4%BA%BA%E7%9A%84csdn/">阅读全文&nbsp;<i class="fas fa-angle-right"></i></a>
-</div>
-
-            </li>
-        
     </ul>
 
     <div class="home-paginator">
@@ -550,5 +589,5 @@
 <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 <!-- 页面点击小红心 -->
-<script type="text/javascript" src="/js/src/maodian.js"></script>
+<!--<script type="text/javascript" src="/js/src/maodian.js"></script>-->
 </html>
